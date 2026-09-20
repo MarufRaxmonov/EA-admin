@@ -215,3 +215,432 @@
     </section>
 
     <section id="settings" class="section">
+      <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Sozlamalar</h2></div></div>
+      <div class="admin-grid">
+        <article class="card">
+          <div class="card-head"><div class="card-icon">💰</div><div><h3>Narx sozlamasi</h3><p>Har bir savol uchun narx (so‘m)</p></div></div>
+          <div class="formula">Hisoblash: <b>savollar soni × narx</b><br><span>Masalan: 500 savol × 10 so‘m = 5 000 so‘m</span></div>
+          <div class="price-row"><div class="price-control"><span>1 savol =</span><input id="priceInput" type="number" min="1" max="99999" value="10" aria-label="Bir savol narxi"><span>so‘m</span></div><button id="savePriceBtn" class="primary-btn" type="button">💾 Saqlash</button></div>
+          <div class="current-label">Hozirgi narx: <b><span id="currentPrice">10</span> so‘m/savol</b></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div class="card-icon">💳</div><div><h3>To‘lov kartasi</h3><p>Foydalanuvchilar ko‘radigan karta</p></div></div>
+          <div class="payment-card-form">
+            <label class="field-label">Bank nomi<input id="cardBank" maxlength="30" value="HUMO"></label>
+            <label class="field-label">Belgi / emoji<input id="cardBrand" maxlength="8" value="🟠"></label>
+            <label class="field-label">Karta raqami<input id="cardNumber" maxlength="23" inputmode="numeric" value="4073 4200 6816 5541"></label>
+            <label class="field-label">Karta egasi<input id="cardHolder" maxlength="60" value="MARUF RAXMONOV"></label>
+          </div>
+          <div class="save-row"><span class="security-note">Saqlangandan keyin to‘lov oynasida yangilanadi.</span><button id="saveCardBtn" class="primary-btn" type="button">💳 Saqlash</button></div>
+        </article>
+      </div>
+
+      <article class="card background-card">
+        <div class="card-head"><div class="card-icon">🖼️</div><div><h3>Fon rasmi boshqaruvi</h3><p>Ko‘rinadigan ekranlar, xiralik va blur darajasini tanlang.</p></div></div>
+        <label class="toggle-line"><input id="bgEnabled" type="checkbox" checked> Fon rasmi yoqilgan</label>
+        <div class="source-row"><input id="bgSource" type="url" placeholder="Rasm URL manzilini kiriting"><label class="file-btn" for="bgFile">📁 Rasm</label><input id="bgFile" class="hidden" type="file" accept="image/*"></div>
+        <div id="bgPreview" class="bg-preview"></div>
+        <div class="range-row"><label for="bgOpacity">Rasm ko‘rinishi / xiralik</label><b id="bgOpacityValue">24%</b></div>
+        <input id="bgOpacity" type="range" min="0" max="100" value="24">
+        <div class="range-row"><label for="bgBlur">Aniqlik / blur</label><b id="bgBlurValue">Aniq</b></div>
+        <input id="bgBlur" type="range" min="0" max="24" value="0">
+        <div class="presets"><button class="preset" data-opacity="24" data-blur="0" type="button">Aniq</button><button class="preset" data-opacity="18" data-blur="4" type="button">Yengil blur</button><button class="preset" data-opacity="12" data-blur="12" type="button">Kuchli blur</button></div>
+        <div class="subheading">Fon ko‘rinadigan qismlar</div>
+        <div id="sectionChecks" class="section-checks"></div>
+        <div class="actions"><button id="saveBackgroundBtn" class="primary-btn" type="button">💾 Fon sozlamalarini saqlash</button><button id="clearBackgroundBtn" class="danger-btn" type="button">Fon rasmi o‘chirish</button></div>
+        <div class="security-note">Sozlamalar Firebase’da saqlanadi va foydalanuvchi oynalarida qo‘llanadi.</div>
+      </article>
+    </section>
+  </div>
+
+  <div id="messageModal" class="overlay" aria-hidden="true">
+    <div class="modal"><div class="modal-head"><h2>Foydalanuvchiga xabar</h2><button class="close" data-close-modal="messageModal" type="button">×</button></div><p class="subtle">Qabul qiluvchi: <b id="messageRecipient"></b></p><textarea id="messageInput" maxlength="500" placeholder="Xabar matnini yozing..."></textarea><div class="counter">Maksimal 500 ta belgi</div><div class="modal-actions"><button class="secondary-btn" data-close-modal="messageModal" type="button">Bekor qilish</button><button id="sendMessageBtn" class="primary-btn" type="button">✉ Xabarni yuborish</button></div></div>
+  </div>
+
+  <div id="uploadModal" class="overlay" aria-hidden="true">
+    <div class="modal"><div class="modal-head"><div><h2>Foydalanuvchiga fayl yuklash</h2><div id="uploadRecipient" class="subtle"></div></div><button class="close" data-close-modal="uploadModal" type="button">×</button></div>
+      <label id="uploadDrop" class="upload-drop" for="adminFileInput"><div class="upload-icon">📄</div><strong>DOCX fayl tanlang</strong><small>Bosing va qurilmadan yuklang</small></label>
+      <input id="adminFileInput" class="hidden" type="file" accept=".docx">
+      <div id="uploadStatus" class="upload-status">Fayl tanlanmagan.</div>
+      <label class="select-label">To‘g‘ri javob joylashgan ustun<select id="answerIndex"><option value="1">2-ustun (A)</option><option value="2">3-ustun (B)</option><option value="3">4-ustun (C)</option><option value="4">5-ustun (D)</option></select></label>
+      <div class="modal-actions"><button class="secondary-btn" data-close-modal="uploadModal" type="button">Bekor qilish</button><button id="saveUploadBtn" class="primary-btn" type="button" disabled>Foydalanuvchiga saqlash</button></div>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="overlay"><div class="modal receipt-modal"><div class="modal-head"><h2>To‘lov cheki</h2><button class="close" data-close-modal="receiptModal" type="button">×</button></div><img id="receiptImage" alt="To‘lov cheki"></div></div>
+  <div id="confirmModal" class="overlay"><div class="modal"><div id="confirmIcon" class="confirm-icon">⚠️</div><div id="confirmText" class="confirm-text"></div><div class="modal-actions"><button id="confirmNo" class="secondary-btn" type="button">Bekor qilish</button><button id="confirmYes" class="primary-btn" type="button">Tasdiqlash</button></div></div></div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get, set, update, remove, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const MAIN_CONFIG = {
+      apiKey:"AIzaSyDIS6K64q7MTQUqxd5LmcqbtoLi08bYPLc",
+      authDomain:"exam-assistant-asosiy.firebaseapp.com",
+      databaseURL:"https://exam-assistant-asosiy-default-rtdb.firebaseio.com",
+      projectId:"exam-assistant-asosiy",
+      storageBucket:"exam-assistant-asosiy.firebasestorage.app",
+      messagingSenderId:"529768867404",
+      appId:"1:529768867404:web:f65da74a7a8624ffaeb6e9"
+    };
+    const ADMIN_CONFIG = {
+      apiKey:"AIzaSyDR0qzOH2qH1Qs2sIdn5bxoNg7FUUCW0Pg",
+      authDomain:"assistant-3-12d54.firebaseapp.com",
+      databaseURL:"https://assistant-3-12d54-default-rtdb.firebaseio.com",
+      projectId:"assistant-3-12d54",
+      storageBucket:"assistant-3-12d54.firebasestorage.app",
+      messagingSenderId:"872223491683",
+      appId:"1:872223491683:web:d957749e883ea4850f5a56"
+    };
+    const ADMIN_ID = "8768210639";
+    const BOT_TOKEN = "8830275401:AAFqTjHMd1zzItRF576Q0C_lzJVMQwDTqvk";
+    const MAX_QUESTIONS = 10000;
+    const FREE_UPLOAD_LIMIT = 3;
+    const tg = window.Telegram?.WebApp || null;
+    const mainApp = getApps().find(app => app.name === "adminMainApp") || initializeApp(MAIN_CONFIG, "adminMainApp");
+    const settingsApp = getApps().find(app => app.name === "adminSettingsApp") || initializeApp(ADMIN_CONFIG, "adminSettingsApp");
+    const db = getDatabase(mainApp);
+    const settingsDb = getDatabase(settingsApp);
+    const mainRef = path => ref(db, String(path).replace(/^\/+|\/+$/g,""));
+    const settingsRef = path => ref(settingsDb, String(path).replace(/^\/+|\/+$/g,""));
+
+    let users = {};
+    let payments = {};
+    let selectedUsers = new Set();
+    let messageTargetUid = null;
+    let uploadTargetUid = null;
+    let uploadTargetName = "";
+    let uploadFileName = "";
+    let uploadRows = [];
+    let pendingBackgroundSource = "";
+    let currentBackground = null;
+    let confirmAction = null;
+    let toastTimer = null;
+    let listenersStarted = false;
+
+    const SECTION_LABELS = {
+      loading:"Ilova yuklanishi", main:"Asosiy menyu", import:"Fayl yuklash oynasi",
+      studySetup:"Tayyorlanish sozlamasi", study:"Tayyorlanish testi", examSetup:"Imtihon sozlamasi",
+      realExam:"Imtihon jarayoni", range:"Oraliq rejimi", answers:"Natijalar va javoblar",
+      result:"Natijalar ekrani", profile:"Profil oynasi", admin:"Admin paneli",
+      paymentModal:"To‘lov modali", aboutModal:"Ilova haqida oynasi", newFileModal:"Yangi fayl tasdiqlash oynasi",
+      clearModal:"Faylni o‘chirish oynasi", uploadGuideModal:"Yuklash qo‘llanmasi",
+      adminUploadModal:"Admin fayl yuklash oynasi", adminMessageModal:"Admin xabar oynasi", receiptModal:"To‘lov cheki oynasi"
+    };
+    const DEFAULT_BACKGROUND = {
+      source:"", enabled:true, opacity:24, blur:0,
+      sections:Object.fromEntries(Object.keys(SECTION_LABELS).map(key => [key,true]))
+    };
+
+    const $ = id => document.getElementById(id);
+    const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[char]));
+    const formatMoney = value => `${Number(value || 0).toLocaleString("ru-RU")} so‘m`;
+    const userName = profile => `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() || "Noma’lum foydalanuvchi";
+    const isSafeImage = value => /^(https?:\/\/|data:image\/|blob:)/i.test(String(value || ""));
+    const safeImageSrc = value => isSafeImage(value) ? String(value) : "";
+    const todayKey = () => new Intl.DateTimeFormat("en-CA",{ timeZone:"Asia/Samarkand" }).format(new Date());
+
+    async function sendTelegramNotification(uid, profile, payment) {
+      if (!BOT_TOKEN || !ADMIN_ID) return;
+      try {
+        const uName = userName(profile);
+        const usernameStr = profile?.username ? `@${profile.username}` : "yo'q";
+        const text = `💸 <b>Yangi to‘lov keldi!</b>\n\n` +
+                     `👤 <b>Foydalanuvchi:</b> ${escapeHTML(uName)}\n` +
+                     `🏷 <b>Username:</b> ${escapeHTML(usernameStr)}\n` +
+                     `🆔 <b>Telegram ID:</b> <code>${uid}</code>\n\n` +
+                     `💰 <b>Summa:</b> ${formatMoney(payment.amount)}\n` +
+                     `📄 <b>Fayl:</b> ${escapeHTML(payment.fileName || "Noma'lum")}\n` +
+                     `❓ <b>Savollar soni:</b> ${payment.questionCount || 0} ta\n` +
+                     `⏱ <b>Vaqti:</b> ${payment.timestamp ? new Date(payment.timestamp).toLocaleString("uz-UZ") : "Noma'lum"}`;
+
+        const receiptUrl = safeImageSrc(payment.receiptImage);
+        let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        let body = { chat_id: ADMIN_ID, text: text, parse_mode: "HTML" };
+
+        if (receiptUrl && receiptUrl.startsWith("http")) {
+          url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+          body = { chat_id: ADMIN_ID, photo: receiptUrl, caption: text, parse_mode: "HTML" };
+        } else if (receiptUrl && receiptUrl.startsWith("data:image")) {
+          try {
+            const blob = await (await fetch(receiptUrl)).blob();
+            const formData = new FormData();
+            formData.append("chat_id", ADMIN_ID);
+            formData.append("photo", blob, "receipt.jpg");
+            formData.append("caption", text);
+            formData.append("parse_mode", "HTML");
+
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: "POST", body: formData });
+            await update(mainRef(`users/${uid}/profile/pendingPayment`), { botNotified: true });
+            return;
+          } catch (err) {
+            console.error("Base64 rasmini yuborishda xatolik:", err);
+          }
+        }
+
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        await update(mainRef(`users/${uid}/profile/pendingPayment`), { botNotified: true });
+      } catch (err) {
+        console.error("Telegram botga bildirishnoma yuborishda xatolik:", err);
+      }
+    }
+
+    function checkAndNotifyPendingPayments(usersData) {
+      if (!usersData) return;
+      Object.entries(usersData).forEach(([uid, node]) => {
+        const profile = node?.profile || {};
+        const payment = profile?.pendingPayment;
+        if (payment && payment.status === "pending" && !payment.botNotified) {
+          sendTelegramNotification(uid, profile, payment);
+        }
+      });
+    }
+
+    function normalizeBackground(value) {
+      const raw = value && typeof value === "object" ? value : {};
+      const candidate = raw.source || raw.url || raw.imageUrl || raw.backgroundUrl || raw.image || "";
+      let source = typeof candidate === "string" ? candidate.trim() : "";
+      if (source && !isSafeImage(source)) {
+        const compact = source.replace(/\s/g,"");
+        if (/^[A-Za-z0-9+/]+={0,2}$/.test(compact) && compact.length > 100) source = `data:image/jpeg;base64,${compact}`;
+      }
+      const sections = { ...DEFAULT_BACKGROUND.sections };
+      if (raw.sections && typeof raw.sections === "object") Object.keys(sections).forEach(key => { if (key in raw.sections) sections[key] = raw.sections[key] !== false; });
+      return { ...DEFAULT_BACKGROUND, ...raw, source:isSafeImage(source) ? source : "", enabled:raw.enabled !== false, opacity:Math.max(0,Math.min(100,Number(raw.opacity) || 0)), blur:Math.max(0,Math.min(24,Number(raw.blur) || 0)), sections };
+    }
+    function notify(message, kind="info") {
+      const toast = $("toast"); toast.textContent = message; toast.className = `toast show ${kind}`;
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.className = "toast"; }, 3600);
+    }
+    function openModal(id) { const modal = $(id); if (modal) { modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); } }
+    function closeModal(id) { const modal = $(id); if (modal) { modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); } }
+    function askConfirmation(text,{icon="⚠️",yesText="Tasdiqlash",action}={}) {
+      $("confirmIcon").textContent = icon; $("confirmText").textContent = text; $("confirmYes").textContent = yesText; confirmAction = action; openModal("confirmModal");
+    }
+    async function runConfirmed() {
+      const action = confirmAction; confirmAction = null; closeModal("confirmModal");
+      if (!action) return;
+      try { await action(); } catch (error) { notify(`❌ ${error?.message || error}`,"error"); }
+    }
+    function formatAge(timestamp) {
+      const parsed = typeof timestamp === "number" ? (timestamp < 100000000000 ? timestamp * 1000 : timestamp) : Date.parse(String(timestamp || ""));
+      if (!Number.isFinite(parsed)) return "Vaqt aniqlanmadi";
+      const minutes = Math.floor(Math.max(0,Date.now()-parsed)/60000);
+      if (minutes < 1) return "Hozirgina yuborildi";
+      if (minutes < 60) return `${minutes} daqiqa oldin`;
+      const hours = Math.floor(minutes/60); if (hours < 24) return `${hours} soat oldin`;
+      return `${Math.floor(hours/24)} kun oldin`;
+    }
+    function getProfiles() {
+      return Object.entries(users || {}).map(([uid,node]) => ({ uid:String(uid), profile:node?.profile || {}, node:node || {} })).filter(item => Object.keys(item.profile).length);
+    }
+
+    function renderOverview() {
+      const rows = getProfiles();
+      const pending = rows.filter(({profile}) => profile.pendingPayment?.status === "pending");
+      const approved = Object.values(payments || {}).filter(payment => payment?.status === "approved");
+      const total = approved.reduce((sum,payment) => sum + Number(payment.amount || 0),0);
+      const today = approved.filter(payment => payment.approvedAt && new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Samarkand"}).format(new Date(payment.approvedAt)) === todayKey()).reduce((sum,payment) => sum + Number(payment.amount || 0),0);
+      $("revenueToday").textContent = formatMoney(today); $("revenueTotal").textContent = formatMoney(total);
+      $("onlineCount").textContent = rows.filter(({profile}) => profile.isOnline).length;
+      $("pendingCount").textContent = pending.length; $("totalUsers").textContent = rows.length;
+    }
+
+    function renderPayments() {
+      const list = $("paymentList");
+      const pending = getProfiles().filter(({profile}) => profile.pendingPayment?.status === "pending");
+      if (!pending.length) { list.innerHTML = '<div class="empty">⏳ Hozircha kutilayotgan to‘lovlar yo‘q.</div>'; return; }
+      list.innerHTML = pending.map(({uid,profile}) => {
+        const payment = profile.pendingPayment || {};
+        const receipt = safeImageSrc(payment.receiptImage);
+        const name = escapeHTML(userName(profile));
+        const username = profile.username ? `@${escapeHTML(profile.username)}` : "username yo‘q";
+        const time = payment.timestamp ? new Date(payment.timestamp).toLocaleString("uz-UZ",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "vaqt yo‘q";
+        return `<article class="payment-card">
+          <div class="payment-top"><div class="payment-user"><strong>${name}</strong><span>${username} · ${time}</span><span class="payment-age">⏱ ${escapeHTML(formatAge(payment.timestamp))}</span></div><div class="payment-amount">${formatMoney(payment.amount)}</div></div>
+          <div class="payment-meta"><span class="pill">📄 ${escapeHTML(payment.fileName || "fayl")}</span><span class="pill">${Number(payment.questionCount || 0).toLocaleString("ru-RU")} ta savol</span></div>
+          ${receipt ? `<div class="receipt" data-action="receipt" data-src="${escapeHTML(receipt)}"><img src="${escapeHTML(receipt)}" alt="Chek"><span>👆 Chekni ko‘rish</span></div>` : '<div class="pill">📎 Chek rasmi yuklanmagan</div>'}
+          <div class="payment-actions"><button class="primary-btn" data-action="approve" data-uid="${escapeHTML(uid)}" type="button">✅ Tasdiqlash</button><button class="danger-btn" data-action="reject" data-uid="${escapeHTML(uid)}" type="button">❌ Rad etish</button></div>
+        </article>`;
+      }).join("");
+    }
+
+    function renderUsers() {
+      const list = $("userList");
+      const rows = getProfiles();
+      if (!rows.length) { list.innerHTML = '<div class="empty">Foydalanuvchilar topilmadi.</div>'; return; }
+      const query = $("userSearch").value.trim().toLowerCase();
+      const visibleRows = rows.filter(({uid,profile}) => `${userName(profile)} @${profile.username || ""} ${profile.id || uid}`.toLowerCase().includes(query));
+      if (!visibleRows.length) { list.innerHTML = '<div class="empty">Qidiruv bo‘yicha foydalanuvchi topilmadi.</div>'; return; }
+       list.innerHTML = visibleRows.map(({uid,profile}) => {
+         const name = userName(profile); const pending = profile.pendingPayment?.status === "pending";
+         return `<article class="user-card" data-search="${escapeHTML(`${name} @${profile.username \vert{}\vert{} ""} ${profile.id || uid}`.toLowerCase())}">
+          <div class="user-main"><input class="user-check" type="checkbox" data-user-check="${escapeHTML(uid)}" ${selectedUsers.has(uid) ? "checked" : ""}>
+            <div><div class="user-name-row"><span class="user-name">${escapeHTML(name)}</span><span class="${profile.isOnline ? "status-online" : "status-offline"}">● ${profile.isOnline ? "ONLAYN" : "OFLAYN"}</span>${pending ? '<span class="pending-badge">⏳ TO‘LOV KUTILMOQDA</span>' : ""}</div>
+            <div class="user-meta">@${escapeHTML(profile.username || "username_yo‘q")} · ID: ${escapeHTML(profile.id || uid)}</div>${profile.isOnline ? `<div class="activity">⚡ ${escapeHTML(profile.currentActivity || "Faol")}</div>` : ""}</div>
+          </div>
+          <div class="user-actions"><button class="block ${profile.isBlocked ? "is-blocked" : ""}" data-action="block" data-uid="${escapeHTML(uid)}" data-blocked="${profile.isBlocked ? "true" : "false"}" type="button">${profile.isBlocked ? "🔓 Ochish" : "🔒 Bloklash"}</button><button data-action="upload" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">📄 Fayl yuklash</button><button data-action="free" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">🎁 Bepul fayl</button><button data-action="message" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">✉ Xabar</button><button class="delete" data-action="delete" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">🗑 O‘chirish</button></div>
+        </article>`;
+      }).join("");
+    }
+    function renderAll() { renderOverview(); renderPayments(); renderUsers(); updateSelectionUI(); }
+    function updateSelectionUI() { $("selectedCount").textContent = `${selectedUsers.size} ta`; $("deleteSelectedBtn").disabled = selectedUsers.size === 0; }
+
+    async function loadSettings() {
+      try {
+        const [priceSnap,cardSnap,bgSnap] = await Promise.all([get(settingsRef("settings/pricePerQuestion")),get(settingsRef("settings/paymentCard")),get(settingsRef("app_settings/background"))]);
+        if (priceSnap.exists() && Number(priceSnap.val()) > 0) { $("priceInput").value = Number(priceSnap.val()); $("currentPrice").textContent = Number(priceSnap.val()).toLocaleString("ru-RU"); }
+        if (cardSnap.exists()) {
+          const card = cardSnap.val() || {}; $("cardBank").value = card.bankName \vert{}\vert{} ""; $("cardNumber").value = card.cardNumber || ""; $("cardHolder").value = card.holderName \vert{}\vert{} ""; $("cardBrand").value = card.brandIcon || "";
+        }
+        currentBackground = normalizeBackground(bgSnap.exists() ? bgSnap.val() : DEFAULT_BACKGROUND); fillBackgroundForm();
+      } catch (error) { notify(`❌ Sozlamalarni yuklab bo‘lmadi: ${error.message || error}`,"error"); }
+    }
+    function fillBackgroundForm() {
+      const config = currentBackground || DEFAULT_BACKGROUND;
+      $("bgEnabled").checked = config.enabled; $("bgOpacity").value = config.opacity; $("bgBlur").value = config.blur; $("bgSource").value = config.source;
+      updateRangeLabels(); updateBackgroundPreview(config.source);
+      $("sectionChecks").innerHTML = Object.entries(SECTION_LABELS).map(([key,label]) => `<label class="section-check"><input type="checkbox" data-bg-section="${escapeHTML(key)}" ${config.sections[key] !== false ? "checked" : ""}>${escapeHTML(label)}</label>`).join("");
+    }
+    function updateRangeLabels() { $("bgOpacityValue").textContent = `${$("bgOpacity").value}%`; $("bgBlurValue").textContent = Number($("bgBlur").value) ? `${$("bgBlur").value}px blur` : "Aniq"; }
+    function updateBackgroundPreview(source) { $("bgPreview").style.backgroundImage = isSafeImage(source) ? `url("${String(source).replace(/"/g,"\\\"")}")` : "none"; }
+
+    async function savePrice() {
+      const value = Number.parseInt($("priceInput").value,10); if (!Number.isInteger(value) || value < 1 || value > 99999) { notify("❌ Narx 1–99 999 so‘m oralig‘ida bo‘lishi kerak.","error"); return; }
+      const button = $("savePriceBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("settings/pricePerQuestion"),value); $("currentPrice").textContent = value.toLocaleString("ru-RU"); notify(`✅ Narx saqlandi: ${formatMoney(value)} / savol`,"success"); } catch (error) { notify(`❌ Narx saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💾 Saqlash"; }
+    }
+    async function saveCard() {
+      const bankName = $("cardBank").value.trim(), cardNumber = $("cardNumber").value.trim().replace(/\s+/g," "), holderName = $("cardHolder").value.trim(), brandIcon = $("cardBrand").value.trim() || "🟠";
+      const digits = cardNumber.replace(/\D/g,""); if (!bankName || !holderName || digits.length < 12 || digits.length > 19) { notify("❌ Bank, karta egasi va 12–19 raqamli karta raqamini to‘ldiring.","error"); return; }
+      const button = $("saveCardBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("settings/paymentCard"),{bankName,cardNumber,holderName,brandIcon}); notify("✅ To‘lov kartasi yangilandi.","success"); } catch (error) { notify(`❌ Karta saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💳 Saqlash"; }
+    }
+    async function saveBackground() {
+      const sourceInput = $("bgSource").value.trim(); const source = pendingBackgroundSource || (sourceInput.startsWith("Yuklangan rasm:") ? currentBackground?.source : sourceInput);
+      if (!source || !isSafeImage(source)) { notify("❌ Rasm URL manzili yoki rasm faylini tanlang.","error"); return; }
+      const sections = {}; document.querySelectorAll("[data-bg-section]").forEach(input => { sections[input.dataset.bgSection] = input.checked; });
+      const next = { source, enabled:$("bgEnabled").checked, opacity:Number($("bgOpacity").value), blur:Number($("bgBlur").value), sections, updatedAt:Date.now() };
+      const button = $("saveBackgroundBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("app_settings/background"),next); currentBackground = normalizeBackground(next); pendingBackgroundSource = ""; fillBackgroundForm(); notify("✅ Fon sozlamalari saqlandi.","success"); } catch (error) { notify(`❌ Fon saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💾 Fon sozlamalarini saqlash"; }
+    }
+    async function clearBackground() {
+      askConfirmation("Fon rasmi barcha foydalanuvchilar uchun o‘chirilsinmi?",{icon:"🖼️",yesText:"O‘chirish",action:async() => { const next = {...DEFAULT_BACKGROUND,source:"",updatedAt:Date.now()}; await set(settingsRef("app_settings/background"),next); currentBackground = normalizeBackground(next); pendingBackgroundSource = ""; fillBackgroundForm(); notify("✅ Fon rasmi o‘chirildi.","success"); }});
+    }
+
+    async function approvePayment(uid) {
+      askConfirmation("To‘lov tasdiqlansin va test foydalanuvchiga saqlansinmi?",{icon:"✅",yesText:"Tasdiqlash",action:async() => {
+        const examSnap = await get(mainRef(`users/${uid}/exams/pending`)); if (!examSnap.exists()) throw new Error("Kutayotgan test topilmadi.");
+        const payload = examSnap.val() || {}; const profileSnap = await get(mainRef(`users/${uid}/profile`)); const profile = profileSnap.exists() ? profileSnap.val() || {} : {}; const pending = profile.pendingPayment || {}; const approvedAt = new Date().toISOString();
+        const finalPayload = {...payload,sourceFingerprint:String(payload.sourceFingerprint || ""),contentFingerprint:String(payload.contentFingerprint || "")};
+        const paidKey = String(finalPayload.name || "fayl").trim().toLowerCase().replace(/[.#$[\]/]/g,"_").slice(0,80) || `file_${Date.now()}`;
+        await update(mainRef(`users/${uid}`),{"exams/active":finalPayload,"exams/pending":null, [`profile/paidFiles/${paidKey}`]:{name:finalPayload.name || "",payload:finalPayload,sourceFingerprint:finalPayload.sourceFingerprint,contentFingerprint:finalPayload.contentFingerprint,purchasedAt:approvedAt}, "profile/pendingPayment":null,"profile/freeUsed":true,"profile/freeUploadCount":FREE_UPLOAD_LIMIT,"profile/paymentDecision":{status:"approved",at:approvedAt,read:false},"profile/adminNotification":{message:`To‘lovingiz tasdiqlandi! "${finalPayload.name || "fayl"}" test fayli saqlandi va ishlatishga tayyor.`,at:approvedAt,read:false}});
+        await set(push(settingsRef("payments")),{uid,amount:Number(pending.amount || 0),questionCount:Number(pending.questionCount || finalPayload.questions?.length || 0),bonusQuestionsUsed:Math.max(0,Math.floor(Number(pending.bonusQuestionsUsed) || 0)),fileName:finalPayload.name || "",sourceFingerprint:finalPayload.sourceFingerprint,contentFingerprint:finalPayload.contentFingerprint,approvedAt,status:"approved"});
+        notify("✅ To‘lov tasdiqlandi va fayl saqlandi.","success");
+      }});
+    }
+    async function rejectPayment(uid) {
+      askConfirmation("To‘lov rad etilsinmi? Foydalanuvchiga xabar yuboriladi.",{icon:"❌",yesText:"Rad etish",action:async() => {
+        const at = new Date().toISOString(); await remove(mainRef(`users/${uid}/exams/pending`)); await update(mainRef(`users/${uid}/profile`),{pendingPayment:null,paymentDecision:{status:"rejected",at,read:false},adminNotification:{message:"❌ Afsuski, to‘lovingiz tasdiqlanmadi. To‘g‘ri chek rasmini @ExamAssistant_Admin ga yuboring.",at,read:false}}); notify("✅ To‘lov rad etildi.","success");
+      }});
+    }
+    async function toggleBlock(uid,blocked) {
+      askConfirmation(blocked ? "Foydalanuvchi blokdan chiqarilsinmi?" : "Foydalanuvchi bloklansinmi? U ilovadan darhol chiqariladi.",{icon:blocked ? "🔓" : "🔒",yesText:blocked ? "Ochish" : "Bloklash",action:async() => { await update(mainRef(`users/${uid}/profile`),{isBlocked:!blocked,isOnline:false,currentActivity:blocked ? "Asosiy menyu" : "Bloklangan"}); notify(blocked ? "✅ Foydalanuvchi blokdan chiqarildi." : "✅ Foydalanuvchi bloklandi.","success"); }});
+    }
+    async function deleteUser(uid,name) {
+      askConfirmation(`"${name || uid}" foydalanuvchisi va barcha ma’lumotlari o‘chiriladi.`,{icon:"🗑️",yesText:"Ha, o‘chirish",action:async() => { await remove(mainRef(`users/${uid}`)); selectedUsers.delete(uid); notify("✅ Foydalanuvchi o‘chirildi.","success"); }});
+    }
+    async function deleteSelected() {
+       const ids = [...selectedUsers]; if (!ids.length) { notify("Avval foydalanuvchilarni tanlang.","warning"); return; }
+      askConfirmation(`${ids.length} ta foydalanuvchining barcha ma’lumotlari o‘chiriladi. Davom etilsinmi?`,{icon:"🗑️",yesText:"Ha, o‘chirish",action:async() => { await Promise.all(ids.map(uid => remove(mainRef(`users/${uid}`)))); selectedUsers.clear(); notify(`${ids.length} ta foydalanuvchi o‘chirildi.`,"success"); }});
+    }
+    async function grantFree(uid,name) {
+      askConfirmation(`"${name || uid}" foydalanuvchisiga bitta bepul fayl huquqi berilsinmi?`,{icon:"🎁",yesText:"Ha, berish",action:async() => { await update(mainRef(`users/${uid}/profile`),{freeUploadGranted:true,freeUploadGrantCount:1,adminNotification:{message:"Admin sizga bitta bepul fayl yuklash huquqini berdi.",at:new Date().toISOString(),read:false}}); notify("✅ Bepul fayl huquqi berildi.","success"); }});
+    }
+    async function sendMessage() {
+      const message = $("messageInput").value.trim(); if (!message || !messageTargetUid) { notify("Xabar matnini kiriting.","warning"); return; }
+      const button = $("sendMessageBtn"); button.disabled = true; button.textContent = "Yuborilmoqda...";
+      try { await update(mainRef(`users/${messageTargetUid}/profile`),{adminNotification:{message,at:new Date().toISOString(),read:false}}); closeModal("messageModal"); notify("✅ Xabar yuborildi.","success"); } catch (error) { notify(`❌ Xabar yuborilmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "✉ Xabarni yuborish"; }
+    }
+
+    function openUpload(uid,name) {
+      uploadTargetUid = uid; uploadTargetName = name || uid; uploadRows = []; uploadFileName = ""; $("uploadRecipient").textContent = `Qabul qiluvchi: ${uploadTargetName}`; $("adminFileInput").value = ""; $("uploadStatus").textContent = "Fayl tanlanmagan."; $("uploadStatus").className = "upload-status"; $("saveUploadBtn").disabled = true; openModal("uploadModal");
+    }
+    function cleanCellHTML(html) {
+      const template = document.createElement("template"); template.innerHTML = String(html || "");
+      template.content.querySelectorAll("script,style,iframe,object,embed").forEach(node => node.remove());
+      template.content.querySelectorAll("*").forEach(node => {
+        [...node.attributes].forEach(attr => { if (/^on/i.test(attr.name) || ["style","color","bgcolor","size","face","width","height","align","valign"].includes(attr.name.toLowerCase())) node.removeAttribute(attr.name); });
+        if (node.tagName === "IMG") { const src = node.getAttribute("src") || ""; if (!isSafeImage(src)) node.remove(); else { node.removeAttribute("width"); node.removeAttribute("height"); node.setAttribute("style","max-width:100%;height:auto"); } }
+      });
+      return template.innerHTML.trim();
+    }
+    async function processDocx(file) {
+      if (!window.mammoth) throw new Error("DOCX o‘quvchi yuklanmadi. Internetni tekshiring.");
+      const result = await window.mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer(),convertImage:image => image.read("base64").then(buffer => ({src:`data:${image.contentType};base64,${buffer}`}))});
+      const doc = new DOMParser().parseFromString(result.value,"text/html");
+      uploadRows = [...doc.querySelectorAll("tr")].map(row => [...row.querySelectorAll("td,th")].map(cell => cleanCellHTML(cell.innerHTML))).filter(row => row.length >= 2 && row.some(Boolean));
+      if (!uploadRows.length) throw new Error("Faylda savollar jadvali topilmadi.");
+      if (uploadRows.length > MAX_QUESTIONS) throw new Error(`Maksimal ${MAX_QUESTIONS} ta savolga ruxsat beriladi.`);
+    }
+    async function handleFile(file) {
+      if (!file) return; if (!/\.docx$/i.test(file.name)) { $("uploadStatus").textContent = "❌ Faqat DOCX fayl qabul qilinadi."; $("uploadStatus").className = "upload-status error"; return; }
+      uploadFileName = file.name.replace(/\.[^/.]+$/,""); $("uploadStatus").innerHTML = '<span class="spinner"></span> DOCX fayli o‘qilmoqda...'; $("saveUploadBtn").disabled = true;
+      try { await processDocx(file); $("uploadStatus").textContent = `✅ ${uploadRows.length.toLocaleString("ru-RU")} ta savol tayyor: “${uploadFileName}”`; $("uploadStatus").className = "upload-status success"; $("saveUploadBtn").disabled = false; } catch (error) { uploadRows = []; $("uploadStatus").textContent = `❌ ${error.message || error}`; $("uploadStatus").className = "upload-status error"; }
+    }
+    async function saveUpload() {
+      if (!uploadTargetUid || !uploadRows.length) return;
+      const answerIndex = Number.parseInt($("answerIndex").value,10); const payload = {name:uploadFileName,isLight:false,questions:uploadRows.map(row => ({q:row[0] || "",a:row[answerIndex] || "",options:row.slice(1)}))};
+      const button = $("saveUploadBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { const at = new Date().toISOString(); await update(mainRef(`users/${uploadTargetUid}`),{"exams/active":payload,"exams/pending":null,"profile/pendingAdminAction":{type:"clearAndUpload",at},"profile/adminNotification":{message:`Admin tomonidan sizga yangi test fayli yuklandi: "${uploadFileName}" (${uploadRows.length} ta savol)`,at,read:false}}); closeModal("uploadModal"); notify("✅ Fayl foydalanuvchiga yuklandi.","success"); } catch (error) { notify(`❌ Fayl saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "Foydalanuvchiga saqlash"; }
+    }
+
+    function handleUserAction(event) {
+      const target = event.target.closest("[data-action]"); if (!target) return; const action = target.dataset.action; const uid = target.dataset.uid;
+      if (action === "approve") approvePayment(uid); if (action === "reject") rejectPayment(uid); if (action === "receipt") { $("receiptImage").src = safeImageSrc(target.dataset.src); openModal("receiptModal"); }
+      if (action === "block") toggleBlock(uid,target.dataset.blocked === "true"); if (action === "delete") deleteUser(uid,target.dataset.name); if (action === "free") grantFree(uid,target.dataset.name);
+      if (action === "upload") openUpload(uid,target.dataset.name); if (action === "message") { messageTargetUid=uid; $("messageRecipient").textContent=target.dataset.name || uid; $("messageInput").value=""; openModal("messageModal"); setTimeout(()=>$("messageInput").focus(),50); }
+    }
+    function startListeners() {
+      if (listenersStarted) return; listenersStarted = true;
+      onValue(mainRef("users"),snapshot => { 
+        users = snapshot.exists() ? snapshot.val() || {} : {}; 
+        renderAll(); 
+        checkAndNotifyPendingPayments(users);
+      },error => notify(`❌ Foydalanuvchilarni o‘qib bo‘lmadi: ${error.message || error}`,"error"));
+      
+      onValue(settingsRef("payments"),snapshot => { payments = snapshot.exists() ? snapshot.val() || {} : {}; renderOverview(); },error => notify(`❌ To‘lovlar bazasini o‘qib bo‘lmadi: ${error.message || error}`,"error"));
+    }
+    async function refresh() {
+      try { const [usersSnap,paymentsSnap] = await Promise.all([get(mainRef("users")),get(settingsRef("payments"))]); users = usersSnap.exists() ? usersSnap.val() || {} : {}; payments = paymentsSnap.exists() ? paymentsSnap.val() || {} : {}; renderAll(); checkAndNotifyPendingPayments(users); notify("✅ Ma’lumotlar yangilandi.","success"); } catch (error) { notify(`❌ Yangilashda xatolik: ${error.message || error}`,"error"); }
+    }
+    function setupUI() {
+      document.querySelectorAll(".tab-btn").forEach(button => button.addEventListener("click",() => { document.querySelectorAll(".tab-btn").forEach(item=>item.classList.remove("active")); button.classList.add("active"); $(button.dataset.target).scrollIntoView({behavior:"smooth",block:"start"}); }));
+      $("refreshBtn").addEventListener("click",refresh); $("userSearch").addEventListener("input",renderUsers); $("deleteSelectedBtn").addEventListener("click",deleteSelected);
+      $("selectAll").addEventListener("change",event => { document.querySelectorAll("[data-user-check]:not(:disabled)").forEach(input => { input.checked=event.target.checked; if (event.target.checked) selectedUsers.add(input.dataset.userCheck); else selectedUsers.delete(input.dataset.userCheck); }); updateSelectionUI(); });
+      $("userList").addEventListener("change",event => { const input=event.target.closest("[data-user-check]"); if (!input) return; if (input.checked) selectedUsers.add(input.dataset.userCheck); else selectedUsers.delete(input.dataset.userCheck); updateSelectionUI(); });
+      $("userList").addEventListener("click",handleUserAction); $("paymentList").addEventListener("click",handleUserAction);
+      $("savePriceBtn").addEventListener("click",savePrice); $("saveCardBtn").addEventListener("click",saveCard); $("saveBackgroundBtn").addEventListener("click",saveBackground); $("clearBackgroundBtn").addEventListener("click",clearBackground);
+      $("bgOpacity").addEventListener("input",updateRangeLabels); $("bgBlur").addEventListener("input",updateRangeLabels); document.querySelectorAll(".preset").forEach(button => button.addEventListener("click",()=>{ $("bgOpacity").value=button.dataset.opacity; $("bgBlur").value=button.dataset.blur; updateRangeLabels(); }));
+      $("bgSource").addEventListener("input",event=>updateBackgroundPreview(event.target.value.trim())); $("bgFile").addEventListener("change",event=>{ const file=event.target.files?.[0]; if (!file \vert{}\vert{} !file.type.startsWith("image/")) { notify("❌ Faqat rasm faylini tanlang.","error"); return; } const reader=new FileReader(); reader.onload=()=>{ pendingBackgroundSource=String(reader.result \vert{}\vert{} ""); $("bgSource").value=`Yuklangan rasm: ${file.name}`; updateBackgroundPreview(pendingBackgroundSource); }; reader.readAsDataURL(file); });
+      $("sendMessageBtn").addEventListener("click",sendMessage); $("adminFileInput").addEventListener("change",event=>handleFile(event.target.files?.[0])); $("saveUploadBtn").addEventListener("click",saveUpload); $("confirmYes").addEventListener("click",runConfirmed); $("confirmNo").addEventListener("click",()=>{confirmAction=null;closeModal("confirmModal");});
+      document.querySelectorAll("[data-close-modal]").forEach(button => button.addEventListener("click",()=>closeModal(button.dataset.closeModal))); document.querySelectorAll(".overlay").forEach(overlay=>overlay.addEventListener("click",event=>{if(event.target===overlay) closeModal(overlay.id);}));
+    }
+
+    function boot() {
+      try { tg?.ready(); tg?.expand(); } catch (_) {}
+      const telegramId = String(tg?.initDataUnsafe?.user?.id || "");
+      if (telegramId !== ADMIN_ID) { $("accessMessage").textContent = telegramId ? "Bu Telegram hisobida admin huquqi mavjud emas." : "Admin panelini Telegram WebApp ichida oching."; return; }
+      $("accessDenied").classList.add("hidden"); $("appShell").classList.remove("hidden"); setupUI(); startListeners(); loadSettings(); refresh();
+    }
+    boot();
+  </script>
+</body>
+</html>
