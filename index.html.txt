@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08090c">
+  <title>Admin panel — Exam Assistant</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    :root {
+      --bg:#08090c; --surface:#121419; --surface-2:#181b22; --surface-3:#20242d;
+      --border:rgba(255,255,255,.09); --text:#f5f7fb; --muted:#979eac;
+      --gold:#ffc453; --green:#32d74b; --blue:#5ac8fa; --orange:#ff9f0a;
+      --red:#ff453a; --radius:20px; --shadow:0 18px 55px rgba(0,0,0,.28);
+    }
+    * { box-sizing:border-box; }
+    html { min-height:100%; background:var(--bg); scroll-behavior:smooth; }
+    body {
+      min-height:100%; margin:0; color:var(--text); background:
+        radial-gradient(circle at 8% -5%,rgba(91,75,25,.22),transparent 32rem),
+        radial-gradient(circle at 100% 0,rgba(29,71,104,.16),transparent 30rem),var(--bg);
+      font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.55; }
+    .shell { width:min(1180px,100%); margin:0 auto; padding:24px 18px 70px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:22px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand-mark { display:grid; place-items:center; width:42px; height:42px; border-radius:14px; color:#101114; background:linear-gradient(135deg,#ffe08a,#ff9f0a); font-size:21px; box-shadow:0 8px 25px rgba(255,196,83,.2); }
+    .eyebrow { color:var(--gold); font-size:11px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+    h1,h2,h3,p { margin:0; }
+    h1 { margin-top:2px; font-size:clamp(23px,4vw,32px); letter-spacing:-.04em; }
+    .subtle { color:var(--muted); font-size:13px; }
+    .refresh-btn,.secondary-btn,.danger-btn,.primary-btn,.ghost-btn {
+      border:1px solid var(--border); border-radius:12px; padding:11px 14px; color:var(--text);
+      background:var(--surface-2); transition:.18s ease; font-weight:800; font-size:12px;
+    }
+    .refresh-btn:hover,.secondary-btn:hover,.ghost-btn:hover { background:var(--surface-3); border-color:rgba(255,255,255,.17); transform:translateY(-1px); }
+    .primary-btn { border:0; color:#101114; background:linear-gradient(135deg,#ffe08a,#ffb11b); }
+    .primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .danger-btn { border-color:rgba(255,69,58,.3); color:#ff9b95; background:rgba(255,69,58,.1); }
+    .danger-btn:hover { background:rgba(255,69,58,.18); }
+    .hidden { display:none!important; }
+    .access-card { max-width:540px; margin:15vh auto; padding:34px; border:1px solid var(--border); border-radius:26px; background:rgba(18,20,25,.9); box-shadow:var(--shadow); text-align:center; }
+    .access-card .brand-mark { margin:0 auto 15px; }
+    .access-card h2 { margin-bottom:8px; font-size:24px; }
+    .access-card p { color:var(--muted); }
+    .admin-tabs { display:flex; gap:8px; overflow:auto; padding:5px; margin-bottom:22px; border:1px solid var(--border); border-radius:16px; background:rgba(18,20,25,.72); position:sticky; top:8px; z-index:20; backdrop-filter:blur(18px); }
+    .tab-btn { flex:1; min-width:110px; border:0; border-radius:11px; padding:12px 15px; color:var(--muted); background:transparent; font-weight:800; white-space:nowrap; }
+    .tab-btn.active { color:#111318; background:var(--gold); }
+    .section { scroll-margin-top:82px; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin:30px 0 12px; }
+    .section-title { font-size:13px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .metric,.card { border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(145deg,rgba(30,34,42,.96),rgba(15,17,22,.98)); box-shadow:var(--shadow); }
+    .metric { min-height:135px; padding:18px; position:relative; overflow:hidden; }
+    .metric::after { content:""; position:absolute; width:90px; height:90px; right:-28px; bottom:-28px; border-radius:50%; background:currentColor; opacity:.06; }
+    .metric.gold { color:var(--gold); } .metric.green { color:var(--green); } .metric.blue { color:var(--blue); } .metric.orange { color:var(--orange); }
+    .metric-label { color:var(--muted); font-size:10px; font-weight:900; letter-spacing:.12em; }
+    .metric-value { margin:14px 0 4px; color:var(--text); font-size:clamp(21px,3vw,29px); font-weight:900; letter-spacing:-.04em; }
+    .metric-hint { color:var(--muted); font-size:11px; }
+    .total-users { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding:19px 22px; }
+    .total-users strong { color:var(--gold); font-size:31px; }
+    .admin-grid { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr); gap:14px; }
+    .card { padding:20px; }
+    .card-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:17px; }
+    .card-icon { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border-radius:14px; background:rgba(255,196,83,.12); font-size:21px; }
+    .card h3 { font-size:16px; } .card-head p { margin-top:3px; color:var(--muted); font-size:12px; }
+    .formula { padding:12px 14px; border-radius:12px; color:var(--muted); background:rgba(255,255,255,.045); font-size:12px; }
+    .formula b { color:var(--text); }
+    .price-row { display:flex; gap:10px; align-items:center; margin-top:14px; }
+    .price-control { display:flex; align-items:center; flex:1; min-width:0; overflow:hidden; border:1px solid var(--border); border-radius:12px; background:rgba(0,0,0,.18); }
+    .price-control span { padding:0 11px; color:var(--muted); white-space:nowrap; font-size:12px; }
+    input,select,textarea { width:100%; border:1px solid var(--border); border-radius:11px; outline:0; color:var(--text); background:#0d0f14; }
+    input:focus,select:focus,textarea:focus { border-color:rgba(255,196,83,.7); box-shadow:0 0 0 3px rgba(255,196,83,.1); }
+    input { padding:11px 12px; } .price-control input { min-width:75px; border:0; border-radius:0; background:transparent; }
+    .current-label { margin-top:12px; color:var(--muted); font-size:12px; } .current-label b { color:var(--gold); }
+    .payment-card-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .field-label { display:grid; gap:6px; color:var(--muted); font-size:11px; font-weight:800; }
+    .field-label input { color:var(--text); }
+    .payment-card-form .field-label:nth-child(3) { grid-column:1/-1; }
+    .save-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; }
+    .security-note { margin-top:12px; color:var(--muted); font-size:11px; }
+    .background-card { margin-top:14px; }
+    .toggle-line { display:flex; align-items:center; gap:9px; margin-bottom:14px; color:var(--text); font-weight:700; font-size:12px; }
+    .toggle-line input,.section-check input { width:17px; height:17px; accent-color:var(--gold); }
+    .source-row { display:flex; gap:8px; }
+    .source-row input { flex:1; }
+    .file-btn { display:grid; place-items:center; min-width:94px; border:1px solid var(--border); border-radius:11px; padding:0 12px; color:var(--text); background:var(--surface-3); cursor:pointer; font-size:11px; font-weight:900; }
+    .bg-preview { height:130px; margin:12px 0 14px; border:1px solid var(--border); border-radius:14px; background-color:#0b0d11; background-position:center; background-size:cover; overflow:hidden; position:relative; }
+    .bg-preview::after { content:"Oldindan ko‘rish"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; background:linear-gradient(120deg,rgba(0,0,0,.58),rgba(0,0,0,.15)); font-size:12px; font-weight:900; text-shadow:0 1px 5px #000; }
+    .range-row { display:flex; justify-content:space-between; margin:13px 0 6px; color:var(--muted); font-size:12px; }
+    .range-row b { color:var(--gold); }
+    input[type=range] { height:5px; padding:0; border:0; accent-color:var(--gold); background:rgba(255,255,255,.16); }
+    .presets { display:flex; gap:7px; margin:13px 0 17px; flex-wrap:wrap; }
+    .preset { border:1px solid var(--border); border-radius:9px; padding:8px 10px; color:var(--muted); background:transparent; font-size:11px; }
+    .preset:hover { color:var(--text); background:var(--surface-3); }
+    .subheading { margin:15px 0 9px; color:var(--muted); font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .section-checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .section-check { display:flex; align-items:center; gap:8px; min-height:36px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; color:var(--muted); background:rgba(255,255,255,.025); font-size:11px; }
+    .section-check:has(input:checked) { border-color:rgba(255,196,83,.35); color:var(--text); background:rgba(255,196,83,.07); }
+    .actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:16px; }
+    .actions > button { flex:1; min-width:155px; }
+    .empty { padding:35px 18px; border:1px dashed var(--border); border-radius:16px; color:var(--muted); text-align:center; }
+    .payment-list,.users-list { display:grid; gap:12px; }
+    .payment-card { padding:17px; border:1px solid rgba(255,159,10,.24); border-radius:18px; background:linear-gradient(145deg,rgba(64,44,16,.38),rgba(20,20,24,.98)); }
+    .payment-top { display:flex; justify-content:space-between; gap:12px; }
+    .payment-user strong { display:block; font-size:15px; } .payment-user span { display:block; color:var(--muted); font-size:11px; }
+    .payment-age { margin-top:3px; color:var(--orange); font-size:11px; }
+    .payment-amount { color:var(--gold); font-size:19px; font-weight:900; white-space:nowrap; }
+    .payment-meta { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0; }
+    .pill { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--border); border-radius:8px; padding:6px 9px; color:var(--muted); background:rgba(0,0,0,.18); font-size:11px; }
+    .receipt { display:flex; align-items:center; gap:12px; min-height:64px; padding:8px; border:1px solid var(--border); border-radius:12px; background:rgba(0,0,0,.16); cursor:pointer; }
+    .receipt img { width:58px; height:58px; border-radius:8px; object-fit:cover; } .receipt span { color:var(--muted); font-size:11px; }
+    .payment-actions { display:flex; gap:8px; margin-top:13px; } .payment-actions button { flex:1; }
+    .user-toolbar { padding:16px; margin-bottom:12px; border:1px solid var(--border); border-radius:17px; background:var(--surface); }
+    .toolbar-top,.toolbar-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .toolbar-bottom { margin-top:12px; } .selection { color:var(--muted); font-size:12px; }
+    .select-all { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; white-space:nowrap; }
+    .select-all input { width:16px; height:16px; accent-color:var(--gold); }
+    .search { max-width:360px; }
+    .user-card { padding:16px; border:1px solid var(--border); border-radius:17px; background:linear-gradient(145deg,rgba(29,33,41,.95),rgba(15,17,22,.98)); }
+    .user-main { display:flex; gap:11px; }
+    .user-check { width:17px; height:17px; margin-top:3px; accent-color:var(--gold); }
+    .user-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .user-name { font-size:15px; font-weight:900; } .status-online { color:var(--green); font-size:10px; font-weight:900; } .status-offline { color:var(--muted); font-size:10px; font-weight:900; }
+    .pending-badge { border:1px solid rgba(255,159,10,.3); border-radius:6px; padding:2px 6px; color:var(--orange); background:rgba(255,159,10,.12); font-size:10px; font-weight:900; }
+    .user-meta { margin-top:4px; color:var(--muted); font-size:11px; overflow-wrap:anywhere; }
+    .activity { margin-top:3px; color:var(--gold); font-size:11px; }
+    .user-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:15px; padding-top:13px; border-top:1px solid var(--border); }
+    .user-actions button { flex:1; min-width:125px; border:1px solid var(--border); border-radius:9px; padding:8px 9px; color:var(--text); background:var(--surface-3); font-size:10px; font-weight:900; }
+    .user-actions .block.is-blocked { color:#9bdcff; background:rgba(90,200,250,.1); } .user-actions .delete { color:#ff9b95; background:rgba(255,69,58,.08); }
+    .overlay { position:fixed; inset:0; z-index:100; display:none; place-items:center; padding:18px; background:rgba(0,0,0,.72); backdrop-filter:blur(12px); }
+    .overlay.open { display:grid; }
+    .modal { width:min(560px,100%); max-height:min(88vh,760px); overflow:auto; padding:22px; border:1px solid var(--border); border-radius:22px; background:#15181e; box-shadow:0 25px 80px rgba(0,0,0,.5); }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:17px; }
+    .modal-head h2 { font-size:19px; } .close { border:0; color:var(--muted); background:transparent; font-size:25px; line-height:1; }
+    .modal textarea { min-height:130px; resize:vertical; padding:12px; }
+    .modal .counter { margin:7px 0 13px; color:var(--muted); font-size:11px; }
+    .modal-actions { display:flex; gap:9px; margin-top:15px; } .modal-actions button { flex:1; }
+    .upload-drop { display:grid; place-items:center; min-height:190px; border:1px dashed rgba(255,196,83,.38); border-radius:16px; padding:20px; text-align:center; background:rgba(255,196,83,.04); cursor:pointer; }
+    .upload-drop:hover { background:rgba(255,196,83,.08); }
+    .upload-icon { font-size:42px; } .upload-drop strong { display:block; margin-top:7px; font-size:16px; } .upload-drop small { display:block; margin-top:5px; color:var(--muted); }
+    .upload-status { margin-top:12px; color:var(--muted); text-align:center; font-size:12px; }
+    .upload-status.success { color:var(--green); } .upload-status.error { color:#ff9b95; }
+    .select-label { display:grid; gap:7px; margin-top:15px; color:var(--muted); font-size:12px; font-weight:800; }
+    .select-label select { padding:11px 12px; }
+    .receipt-modal img { display:block; width:100%; max-height:70vh; border-radius:13px; object-fit:contain; background:#08090c; }
+    .confirm-icon { font-size:34px; text-align:center; } .confirm-text { margin:13px 0; color:var(--text); text-align:center; white-space:pre-line; }
+    .toast { position:fixed; z-index:200; left:50%; bottom:24px; width:min(460px,calc(100% - 30px)); transform:translate(-50%,20px); opacity:0; pointer-events:none; padding:13px 16px; border:1px solid var(--border); border-radius:13px; color:var(--text); background:#20242d; box-shadow:var(--shadow); transition:.22s ease; text-align:center; font-weight:700; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    .toast.success { border-color:rgba(50,215,75,.4); } .toast.error { border-color:rgba(255,69,58,.45); } .toast.warning { border-color:rgba(255,159,10,.45); }
+    .loading { display:grid; place-items:center; min-height:210px; color:var(--muted); }
+    .spinner { display:inline-block; width:15px; height:15px; margin-right:7px; border:2px solid rgba(255,255,255,.25); border-top-color:var(--gold); border-radius:50%; vertical-align:-3px; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @media (max-width:820px) { .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-grid { grid-template-columns:1fr; } }
+    @media (max-width:560px) {
+      .shell { padding:15px 12px 60px; } .topbar { align-items:flex-start; } .refresh-btn { padding:9px; }
+      .metrics { gap:8px; } .metric { min-height:117px; padding:14px; } .metric-value { margin-top:10px; font-size:21px; }
+      .card { padding:16px; } .payment-card-form { grid-template-columns:1fr; } .payment-card-form .field-label:nth-child(3) { grid-column:auto; }
+      .price-row,.source-row,.toolbar-bottom { align-items:stretch; flex-direction:column; } .source-row .file-btn { min-height:42px; }
+      .toolbar-top { align-items:flex-start; flex-direction:column; } .search { max-width:none; } .section-checks { grid-template-columns:1fr; }
+      .payment-top { align-items:flex-start; flex-direction:column; } .payment-amount { font-size:17px; } .payment-actions { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <main id="accessDenied" class="access-card">
+    <div class="brand-mark">EA</div>
+    <h2>Admin panel</h2>
+    <p id="accessMessage">Telegram admin sessiyasi tekshirilmoqda...</p>
+  </main>
+
+  <div id="appShell" class="shell hidden">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">EA</div>
+        <div><div class="eyebrow">Exam Assistant</div><h1>Admin panel</h1><div class="subtle">Barcha boshqaruv bir joyda.</div></div>
+      </div>
+      <button id="refreshBtn" class="refresh-btn" type="button">↻ Yangilash</button>
+    </header>
+
+    <nav class="admin-tabs" aria-label="Admin bo‘limlari">
+      <button class="tab-btn active" data-target="overview">Umumiy</button>
+      <button class="tab-btn" data-target="payments">To‘lovlar</button>
+      <button class="tab-btn" data-target="users">Foydalanuvchilar</button>
+      <button class="tab-btn" data-target="settings">Sozlamalar</button>
+    </nav>
+
+    <section id="overview" class="section">
+      <div class="section-head"><div><div class="eyebrow">Dashboard</div><h2>Umumiy ko‘rsatkichlar</h2></div></div>
+      <div class="metrics">
+        <article class="metric gold"><div class="metric-label">BUGUNGI TUSHUM</div><div id="revenueToday" class="metric-value">0 so‘m</div><div class="metric-hint">Tasdiqlangan to‘lovlar</div></article>
+        <article class="metric green"><div class="metric-label">JAMI TUSHUM</div><div id="revenueTotal" class="metric-value">0 so‘m</div><div class="metric-hint">Barcha vaqt bo‘yicha</div></article>
+        <article class="metric blue"><div class="metric-label">ONLAYN</div><div id="onlineCount" class="metric-value">0</div><div class="metric-hint">Faol foydalanuvchilar</div></article>
+        <article class="metric orange"><div class="metric-label">KUTILAYOTGAN</div><div id="pendingCount" class="metric-value">0</div><div class="metric-hint">Ko‘rib chiqilmagan to‘lovlar</div></article>
+      </div>
+      <div class="card total-users"><span class="subtle">UMUMIY FOYDALANUVCHILAR</span><strong id="totalUsers">0</strong></div>
+    </section>
+
+    <section id="payments" class="section">
+      <div class="section-head"><div><div class="eyebrow">Payments</div><h2>Kutilayotgan to‘lovlar</h2></div></div>
+      <div id="paymentList" class="payment-list"><div class="loading">Yuklanmoqda...</div></div>
+    </section>
+
+    <section id="users" class="section">
+      <div class="section-head"><div><div class="eyebrow">Users</div><h2>Foydalanuvchilar</h2></div></div>
+      <div class="user-toolbar">
+        <div class="toolbar-top"><div class="selection"><b id="selectedCount">0 ta</b> tanlandi</div><button id="deleteSelectedBtn" class="danger-btn" type="button" disabled>🗑 Tanlanganlarni o‘chirish</button></div>
+        <div class="toolbar-bottom"><label class="select-all"><input id="selectAll" type="checkbox"> Barchasini tanlash</label><input id="userSearch" class="search" type="search" placeholder="Ism, username yoki ID bo‘yicha qidirish"></div>
+      </div>
+      <div id="userList" class="users-list"><div class="loading">Yuklanmoqda...</div></div>
+    </section>
+
+    <section id="settings" class="section">
+      <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Sozlamalar</h2></div></div>
+      <div class="admin-grid">
+        <article class="card">
+          <div class="card-head"><div class="card-icon">💰</div><div><h3>Narx sozlamasi</h3><p>Har bir savol uchun narx (so‘m)</p></div></div>
+          <div class="formula">Hisoblash: <b>savollar soni × narx</b><br><span>Masalan: 500 savol × 10 so‘m = 5 000 so‘m</span></div>
+          <div class="price-row"><div class="price-control"><span>1 savol =</span><input id="priceInput" type="number" min="1" max="99999" value="10" aria-label="Bir savol narxi"><span>so‘m</span></div><button id="savePriceBtn" class="primary-btn" type="button">💾 Saqlash</button></div>
+          <div class="current-label">Hozirgi narx: <b><span id="currentPrice">10</span> so‘m/savol</b></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div class="card-icon">💳</div><div><h3>To‘lov kartasi</h3><p>Foydalanuvchilar ko‘radigan karta</p></div></div>
+          <div class="payment-card-form">
+            <label class="field-label">Bank nomi<input id="cardBank" maxlength="30" value="HUMO"></label>
+            <label class="field-label">Belgi / emoji<input id="cardBrand" maxlength="8" value="🟠"></label>
+            <label class="field-label">Karta raqami<input id="cardNumber" maxlength="23" inputmode="numeric" value="4073 4200 6816 5541"></label>
+            <label class="field-label">Karta egasi<input id="cardHolder" maxlength="60" value="MARUF RAXMONOV"></label>
+          </div>
+          <div class="save-row"><span class="security-note">Saqlangandan keyin to‘lov oynasida yangilanadi.</span><button id="saveCardBtn" class="primary-btn" type="button">💳 Saqlash</button></div>
+        </article>
+      </div>
+
+      <article class="card background-card">
+        <div class="card-head"><div class="card-icon">🖼️</div><div><h3>Fon rasmi boshqaruvi</h3><p>Ko‘rinadigan ekranlar, xiralik va blur darajasini tanlang.</p></div></div>
+        <label class="toggle-line"><input id="bgEnabled" type="checkbox" checked> Fon rasmi yoqilgan</label>
+        <div class="source-row"><input id="bgSource" type="url" placeholder="Rasm URL manzilini kiriting"><label class="file-btn" for="bgFile">📁 Rasm</label><input id="bgFile" class="hidden" type="file" accept="image/*"></div>
+        <div id="bgPreview" class="bg-preview"></div>
+        <div class="range-row"><label for="bgOpacity">Rasm ko‘rinishi / xiralik</label><b id="bgOpacityValue">24%</b></div>
+        <input id="bgOpacity" type="range" min="0" max="100" value="24">
+        <div class="range-row"><label for="bgBlur">Aniqlik / blur</label><b id="bgBlurValue">Aniq</b></div>
+        <input id="bgBlur" type="range" min="0" max="24" value="0">
+        <div class="presets"><button class="preset" data-opacity="24" data-blur="0" type="button">Aniq</button><button class="preset" data-opacity="18" data-blur="4" type="button">Yengil blur</button><button class="preset" data-opacity="12" data-blur="12" type="button">Kuchli blur</button></div>
+        <div class="subheading">Fon ko‘rinadigan qismlar</div>
+        <div id="sectionChecks" class="section-checks"></div>
+        <div class="actions"><button id="saveBackgroundBtn" class="primary-btn" type="button">💾 Fon sozlamalarini saqlash</button><button id="clearBackgroundBtn" class="danger-btn" type="button">Fon rasmi o‘chirish</button></div>
+        <div class="security-note">Sozlamalar Firebase’da saqlanadi va foydalanuvchi oynalarida qo‘llanadi.</div>
+      </article>
+    </section>
+  </div>
+
+  <div id="messageModal" class="overlay" aria-hidden="true">
+    <div class="modal"><div class="modal-head"><h2>Foydalanuvchiga xabar</h2><button class="close" data-close-modal="messageModal" type="button">×</button></div><p class="subtle">Qabul qiluvchi: <b id="messageRecipient"></b></p><textarea id="messageInput" maxlength="500" placeholder="Xabar matnini yozing..."></textarea><div class="counter">Maksimal 500 ta belgi</div><div class="modal-actions"><button class="secondary-btn" data-close-modal="messageModal" type="button">Bekor qilish</button><button id="sendMessageBtn" class="primary-btn" type="button">✉ Xabarni yuborish</button></div></div>
+  </div>
+
+  <div id="uploadModal" class="overlay" aria-hidden="true">
+    <div class="modal"><div class="modal-head"><div><h2>Foydalanuvchiga fayl yuklash</h2><div id="uploadRecipient" class="subtle"></div></div><button class="close" data-close-modal="uploadModal" type="button">×</button></div>
+      <label id="uploadDrop" class="upload-drop" for="adminFileInput"><div class="upload-icon">📄</div><strong>DOCX fayl tanlang</strong><small>Bosing va qurilmadan yuklang</small></label>
+      <input id="adminFileInput" class="hidden" type="file" accept=".docx">
+      <div id="uploadStatus" class="upload-status">Fayl tanlanmagan.</div>
+      <label class="select-label">To‘g‘ri javob joylashgan ustun<select id="answerIndex"><option value="1">2-ustun (A)</option><option value="2">3-ustun (B)</option><option value="3">4-ustun (C)</option><option value="4">5-ustun (D)</option></select></label>
+      <div class="modal-actions"><button class="secondary-btn" data-close-modal="uploadModal" type="button">Bekor qilish</button><button id="saveUploadBtn" class="primary-btn" type="button" disabled>Foydalanuvchiga saqlash</button></div>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="overlay"><div class="modal receipt-modal"><div class="modal-head"><h2>To‘lov cheki</h2><button class="close" data-close-modal="receiptModal" type="button">×</button></div><img id="receiptImage" alt="To‘lov cheki"></div></div>
+  <div id="confirmModal" class="overlay"><div class="modal"><div id="confirmIcon" class="confirm-icon">⚠️</div><div id="confirmText" class="confirm-text"></div><div class="modal-actions"><button id="confirmNo" class="secondary-btn" type="button">Bekor qilish</button><button id="confirmYes" class="primary-btn" type="button">Tasdiqlash</button></div></div></div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get, set, update, remove, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const MAIN_CONFIG = {
+      apiKey:"AIzaSyDIS6K64q7MTQUqxd5LmcqbtoLi08bYPLc",
+      authDomain:"exam-assistant-asosiy.firebaseapp.com",
+      databaseURL:"https://exam-assistant-asosiy-default-rtdb.firebaseio.com",
+      projectId:"exam-assistant-asosiy",
+      storageBucket:"exam-assistant-asosiy.firebasestorage.app",
+      messagingSenderId:"529768867404",
+      appId:"1:529768867404:web:f65da74a7a8624ffaeb6e9"
+    };
+    const ADMIN_CONFIG = {
+      apiKey:"AIzaSyDR0qzOH2qH1Qs2sIdn5bxoNg7FUUCW0Pg",
+      authDomain:"assistant-3-12d54.firebaseapp.com",
+      databaseURL:"https://assistant-3-12d54-default-rtdb.firebaseio.com",
+      projectId:"assistant-3-12d54",
+      storageBucket:"assistant-3-12d54.firebasestorage.app",
+      messagingSenderId:"872223491683",
+      appId:"1:872223491683:web:d957749e883ea4850f5a56"
+    };
+    const ADMIN_ID = "8768210639";
+    const BOT_TOKEN = "8830275401:AAFqTjHMd1zzItRF576Q0C_lzJVMQwDTqvk";
+    const MAX_QUESTIONS = 10000;
+    const FREE_UPLOAD_LIMIT = 3;
+    const tg = window.Telegram?.WebApp || null;
+    const mainApp = getApps().find(app => app.name === "adminMainApp") || initializeApp(MAIN_CONFIG, "adminMainApp");
+    const settingsApp = getApps().find(app => app.name === "adminSettingsApp") || initializeApp(ADMIN_CONFIG, "adminSettingsApp");
+    const db = getDatabase(mainApp);
+    const settingsDb = getDatabase(settingsApp);
+    const mainRef = path => ref(db, String(path).replace(/^\/+|\/+$/g,""));
+    const settingsRef = path => ref(settingsDb, String(path).replace(/^\/+|\/+$/g,""));
+
+    let users = {};
+    let payments = {};
+    let selectedUsers = new Set();
+    let messageTargetUid = null;
+    let uploadTargetUid = null;
+    let uploadTargetName = "";
+    let uploadFileName = "";
+    let uploadRows = [];
+    let pendingBackgroundSource = "";
+    let currentBackground = null;
+    let confirmAction = null;
+    let toastTimer = null;
+    let listenersStarted = false;
+    let notifiedPayments = new Set();
+
+    const SECTION_LABELS = {
+      loading:"Ilova yuklanishi", main:"Asosiy menyu", import:"Fayl yuklash oynasi",
+      studySetup:"Tayyorlanish sozlamasi", study:"Tayyorlanish testi", examSetup:"Imtihon sozlamasi",
+      realExam:"Imtihon jarayoni", range:"Oraliq rejimi", answers:"Natijalar va javoblar",
+      result:"Natijalar ekrani", profile:"Profil oynasi", admin:"Admin paneli",
+      paymentModal:"To‘lov modali", aboutModal:"Ilova haqida oynasi", newFileModal:"Yangi fayl tasdiqlash oynasi",
+      clearModal:"Faylni o‘chirish oynasi", uploadGuideModal:"Yuklash qo‘llanmasi",
+      adminUploadModal:"Admin fayl yuklash oynasi", adminMessageModal:"Admin xabar oynasi", receiptModal:"To‘lov cheki oynasi"
+    };
+    const DEFAULT_BACKGROUND = {
+      source:"", enabled:true, opacity:24, blur:0,
+      sections:Object.fromEntries(Object.keys(SECTION_LABELS).map(key => [key,true]))
+    };
+
+    const $ = id => document.getElementById(id);
+    const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[char]));
+    const formatMoney = value => `${Number(value || 0).toLocaleString("ru-RU")} so‘m`;
+    const userName = profile => `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() || "Noma’lum foydalanuvchi";
+    const isSafeImage = value => /^(https?:\/\/|data:image\/|blob:)/i.test(String(value || ""));
+    const safeImageSrc = value => isSafeImage(value) ? String(value) : "";
+    const todayKey = () => new Intl.DateTimeFormat("en-CA",{ timeZone:"Asia/Samarkand" }).format(new Date());
+
+    async function sendTelegramBotNotification(text, photoUrl) {
+      if (!BOT_TOKEN || !ADMIN_ID) return;
+      try {
+        if (photoUrl && photoUrl.startsWith("http")) {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: ADMIN_ID,
+              photo: photoUrl,
+              caption: text,
+              parse_mode: "HTML"
+            })
+          });
+        } else {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: ADMIN_ID,
+              text: text,
+              parse_mode: "HTML"
+            })
+          });
+        }
+      } catch (err) {
+        console.error("Telegram bot bildirishnoma yuborishda xatolik:", err);
+      }
+    }
+
+    function checkAndNotifyPayments(usersData) {
+      if (!usersData) return;
+      Object.entries(usersData).forEach(([uid, node]) => {
+        const profile = node?.profile || {};
+        const payment = profile?.pendingPayment;
+        if (payment && payment.status === "pending") {
+          const paymentKey = `${uid}_${payment.timestamp || ""}_${payment.amount || ""}`;
+          if (!notifiedPayments.has(paymentKey)) {
+            notifiedPayments.add(paymentKey);
+            const uName = userName(profile);
+            const uUsername = profile.username ? `@${profile.username}` : "Username yo‘q";
+            const uId = profile.id || uid;
+            const amount = formatMoney(payment.amount);
+            const fileName = payment.fileName || "Noma'lum fayl";
+            const qCount = payment.questionCount || 0;
+            const text = `💳 <b>YANGI TO'LOV KELDI!</b>
+
+` +
+                         `👤 <b>Foydalanuvchi:</b> ${escapeHTML(uName)}
+` +
+                         `🔗 <b>Username:</b> ${escapeHTML(uUsername)}
+` +
+                         `🆔 <b>ID:</b> <code>${escapeHTML(uId)}</code>
+
+` +
+                         `💰 <b>Summa:</b> ${amount}
+` +
+                         `📄 <b>Fayl:</b> ${escapeHTML(fileName)}
+` +
+                         `❓ <b>Savollar:</b> ${qCount} ta
+` +
+                         `⏰ <b>Vaqt:</b> ${new Date(payment.timestamp || Date.now()).toLocaleString("uz-UZ")}`;
+
+            sendTelegramBotNotification(text, payment.receiptImage);
+          }
+        }
+      });
+    }
+
+    function normalizeBackground(value) {
+      const raw = value && typeof value === "object" ? value : {};
+      const candidate = raw.source || raw.url || raw.imageUrl || raw.backgroundUrl || raw.image || "";
+      let source = typeof candidate === "string" ? candidate.trim() : "";
+      if (source && !isSafeImage(source)) {
+        const compact = source.replace(/\s/g,"");
+        if (/^[A-Za-z0-9+/]+={0,2}$/.test(compact) && compact.length > 100) source = `data:image/jpeg;base64,${compact}`;
+      }
+      const sections = { ...DEFAULT_BACKGROUND.sections };
+      if (raw.sections && typeof raw.sections === "object") Object.keys(sections).forEach(key => { if (key in raw.sections) sections[key] = raw.sections[key] !== false; });
+      return { ...DEFAULT_BACKGROUND, ...raw, source:isSafeImage(source) ? source : "", enabled:raw.enabled !== false, opacity:Math.max(0,Math.min(100,Number(raw.opacity) || 0)), blur:Math.max(0,Math.min(24,Number(raw.blur) || 0)), sections };
+    }
+    function notify(message, kind="info") {
+      const toast = $("toast"); toast.textContent = message; toast.className = `toast show ${kind}`;
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.className = "toast"; }, 3600);
+    }
+    function openModal(id) { const modal = $(id); if (modal) { modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); } }
+    function closeModal(id) { const modal = $(id); if (modal) { modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); } }
+    function askConfirmation(text,{icon="⚠️",yesText="Tasdiqlash",action}={}) {
+      $("confirmIcon").textContent = icon; $("confirmText").textContent = text; $("confirmYes").textContent = yesText; confirmAction = action; openModal("confirmModal");
+    }
+    async function runConfirmed() {
+      const action = confirmAction; confirmAction = null; closeModal("confirmModal");
+      if (!action) return;
+      try { await action(); } catch (error) { notify(`❌ ${error?.message || error}`,"error"); }
+    }
+    function formatAge(timestamp) {
+      const parsed = typeof timestamp === "number" ? (timestamp < 100000000000 ? timestamp * 1000 : timestamp) : Date.parse(String(timestamp || ""));
+      if (!Number.isFinite(parsed)) return "Vaqt aniqlanmadi";
+      const minutes = Math.floor(Math.max(0,Date.now()-parsed)/60000);
+      if (minutes < 1) return "Hozirgina yuborildi";
+      if (minutes < 60) return `${minutes} daqiqa oldin`;
+      const hours = Math.floor(minutes/60); if (hours < 24) return `${hours} soat oldin`;
+      return `${Math.floor(hours/24)} kun oldin`;
+    }
+    function getProfiles() {
+      return Object.entries(users || {}).map(([uid,node]) => ({ uid:String(uid), profile:node?.profile || {}, node:node || {} })).filter(item => Object.keys(item.profile).length);
+    }
+
+    function renderOverview() {
+      const rows = getProfiles();
+      const pending = rows.filter(({profile}) => profile.pendingPayment?.status === "pending");
+      const approved = Object.values(payments || {}).filter(payment => payment?.status === "approved");
+      const total = approved.reduce((sum,payment) => sum + Number(payment.amount || 0),0);
+      const today = approved.filter(payment => payment.approvedAt && new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Samarkand"}).format(new Date(payment.approvedAt)) === todayKey()).reduce((sum,payment) => sum + Number(payment.amount || 0),0);
+      $("revenueToday").textContent = formatMoney(today); $("revenueTotal").textContent = formatMoney(total);
+      $("onlineCount").textContent = rows.filter(({profile}) => profile.isOnline).length;
+      $("pendingCount").textContent = pending.length; $("totalUsers").textContent = rows.length;
+    }
+
+    function renderPayments() {
+      const list = $("paymentList");
+      const pending = getProfiles().filter(({profile}) => profile.pendingPayment?.status === "pending");
+      if (!pending.length) { list.innerHTML = '<div class="empty">⏳ Hozircha kutilayotgan to‘lovlar yo‘q.</div>'; return; }
+      list.innerHTML = pending.map(({uid,profile}) => {
+        const payment = profile.pendingPayment || {};
+        const receipt = safeImageSrc(payment.receiptImage);
+        const name = escapeHTML(userName(profile));
+        const username = profile.username ? `@${escapeHTML(profile.username)}` : "username yo‘q";
+        const time = payment.timestamp ? new Date(payment.timestamp).toLocaleString("uz-UZ",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "vaqt yo‘q";
+        return `<article class="payment-card">
+          <div class="payment-top"><div class="payment-user"><strong>${name}</strong><span>${username} · ${time}</span><span class="payment-age">⏱ ${escapeHTML(formatAge(payment.timestamp))}</span></div><div class="payment-amount">${formatMoney(payment.amount)}</div></div>
+          <div class="payment-meta"><span class="pill">📄 ${escapeHTML(payment.fileName || "fayl")}</span><span class="pill">${Number(payment.questionCount || 0).toLocaleString("ru-RU")} ta savol</span></div>
+          ${receipt ? `<div class="receipt" data-action="receipt" data-src="${escapeHTML(receipt)}"><img src="${escapeHTML(receipt)}" alt="Chek"><span>👆 Chekni ko‘rish</span></div>` : '<div class="pill">📎 Chek rasmi yuklanmagan</div>'}
+          <div class="payment-actions"><button class="primary-btn" data-action="approve" data-uid="${escapeHTML(uid)}" type="button">✅ Tasdiqlash</button><button class="danger-btn" data-action="reject" data-uid="${escapeHTML(uid)}" type="button">❌ Rad etish</button></div>
+        </article>`;
+      }).join("");
+    }
+
+    function renderUsers() {
+      const list = $("userList");
+      const rows = getProfiles();
+      if (!rows.length) { list.innerHTML = '<div class="empty">Foydalanuvchilar topilmadi.</div>'; return; }
+      const query = $("userSearch").value.trim().toLowerCase();
+      const visibleRows = rows.filter(({uid,profile}) => `${userName(profile)} @${profile.username || ""} ${profile.id || uid}`.toLowerCase().includes(query));
+      if (!visibleRows.length) { list.innerHTML = '<div class="empty">Qidiruv bo‘yicha foydalanuvchi topilmadi.</div>'; return; }
+       list.innerHTML = visibleRows.map(({uid,profile}) => {
+         const name = userName(profile); const pending = profile.pendingPayment?.status === "pending";
+         return `<article class="user-card" data-search="${escapeHTML(`${name} @${profile.username || ""} ${profile.id || uid}`.toLowerCase())}">
+          <div class="user-main"><input class="user-check" type="checkbox" data-user-check="${escapeHTML(uid)}" ${selectedUsers.has(uid) ? "checked" : ""}>
+            <div><div class="user-name-row"><span class="user-name">${escapeHTML(name)}</span><span class="${profile.isOnline ? "status-online" : "status-offline"}">● ${profile.isOnline ? "ONLAYN" : "OFLAYN"}</span>${pending ? '<span class="pending-badge">⏳ TO‘LOV KUTILMOQDA</span>' : ""}</div>
+            <div class="user-meta">@${escapeHTML(profile.username || "username_yo‘q")} · ID: ${escapeHTML(profile.id || uid)}</div>${profile.isOnline ? `<div class="activity">⚡ ${escapeHTML(profile.currentActivity || "Faol")}</div>` : ""}</div>
+          </div>
+          <div class="user-actions"><button class="block ${profile.isBlocked ? "is-blocked" : ""}" data-action="block" data-uid="${escapeHTML(uid)}" data-blocked="${profile.isBlocked ? "true" : "false"}" type="button">${profile.isBlocked ? "🔓 Ochish" : "🔒 Bloklash"}</button><button data-action="upload" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">📄 Fayl yuklash</button><button data-action="free" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">🎁 Bepul fayl</button><button data-action="message" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">✉ Xabar</button><button class="delete" data-action="delete" data-uid="${escapeHTML(uid)}" data-name="${escapeHTML(name)}" type="button">🗑 O‘chirish</button></div>
+        </article>`;
+      }).join("");
+    }
+    function renderAll() { renderOverview(); renderPayments(); renderUsers(); updateSelectionUI(); }
+    function updateSelectionUI() { $("selectedCount").textContent = `${selectedUsers.size} ta`; $("deleteSelectedBtn").disabled = selectedUsers.size === 0; }
+
+    async function loadSettings() {
+      try {
+        const [priceSnap,cardSnap,bgSnap] = await Promise.all([get(settingsRef("settings/pricePerQuestion")),get(settingsRef("settings/paymentCard")),get(settingsRef("app_settings/background"))]);
+        if (priceSnap.exists() && Number(priceSnap.val()) > 0) { $("priceInput").value = Number(priceSnap.val()); $("currentPrice").textContent = Number(priceSnap.val()).toLocaleString("ru-RU"); }
+        if (cardSnap.exists()) {
+          const card = cardSnap.val() || {}; $("cardBank").value = card.bankName || ""; $("cardNumber").value = card.cardNumber || ""; $("cardHolder").value = card.holderName || ""; $("cardBrand").value = card.brandIcon || "";
+        }
+        currentBackground = normalizeBackground(bgSnap.exists() ? bgSnap.val() : DEFAULT_BACKGROUND); fillBackgroundForm();
+      } catch (error) { notify(`❌ Sozlamalarni yuklab bo‘lmadi: ${error.message || error}`,"error"); }
+    }
+    function fillBackgroundForm() {
+      const config = currentBackground || DEFAULT_BACKGROUND;
+      $("bgEnabled").checked = config.enabled; $("bgOpacity").value = config.opacity; $("bgBlur").value = config.blur; $("bgSource").value = config.source;
+      updateRangeLabels(); updateBackgroundPreview(config.source);
+      $("sectionChecks").innerHTML = Object.entries(SECTION_LABELS).map(([key,label]) => `<label class="section-check"><input type="checkbox" data-bg-section="${escapeHTML(key)}" ${config.sections[key] !== false ? "checked" : ""}>${escapeHTML(label)}</label>`).join("");
+    }
+    function updateRangeLabels() { $("bgOpacityValue").textContent = `${$("bgOpacity").value}%`; $("bgBlurValue").textContent = Number($("bgBlur").value) ? `${$("bgBlur").value}px blur` : "Aniq"; }
+    function updateBackgroundPreview(source) { $("bgPreview").style.backgroundImage = isSafeImage(source) ? `url("${String(source).replace(/"/g,"\"")}")` : "none"; }
+
+    async function savePrice() {
+      const value = Number.parseInt($("priceInput").value,10); if (!Number.isInteger(value) || value < 1 || value > 99999) { notify("❌ Narx 1–99 999 so‘m oralig‘ida bo‘lishi kerak.","error"); return; }
+      const button = $("savePriceBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("settings/pricePerQuestion"),value); $("currentPrice").textContent = value.toLocaleString("ru-RU"); notify(`✅ Narx saqlandi: ${formatMoney(value)} / savol`,"success"); } catch (error) { notify(`❌ Narx saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💾 Saqlash"; }
+    }
+    async function saveCard() {
+      const bankName = $("cardBank").value.trim(), cardNumber = $("cardNumber").value.trim().replace(/\s+/g," "), holderName = $("cardHolder").value.trim(), brandIcon = $("cardBrand").value.trim() || "🟠";
+      const digits = cardNumber.replace(/\D/g,""); if (!bankName || !holderName || digits.length < 12 || digits.length > 19) { notify("❌ Bank, karta egasi va 12–19 raqamli karta raqamini to‘ldiring.","error"); return; }
+      const button = $("saveCardBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("settings/paymentCard"),{bankName,cardNumber,holderName,brandIcon}); notify("✅ To‘lov kartasi yangilandi.","success"); } catch (error) { notify(`❌ Karta saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💳 Saqlash"; }
+    }
+    async function saveBackground() {
+      const sourceInput = $("bgSource").value.trim(); const source = pendingBackgroundSource || (sourceInput.startsWith("Yuklangan rasm:") ? currentBackground?.source : sourceInput);
+      if (!source || !isSafeImage(source)) { notify("❌ Rasm URL manzili yoki rasm faylini tanlang.","error"); return; }
+      const sections = {}; document.querySelectorAll("[data-bg-section]").forEach(input => { sections[input.dataset.bgSection] = input.checked; });
+      const next = { source, enabled:$("bgEnabled").checked, opacity:Number($("bgOpacity").value), blur:Number($("bgBlur").value), sections, updatedAt:Date.now() };
+      const button = $("saveBackgroundBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { await set(settingsRef("app_settings/background"),next); currentBackground = normalizeBackground(next); pendingBackgroundSource = ""; fillBackgroundForm(); notify("✅ Fon sozlamalari saqlandi.","success"); } catch (error) { notify(`❌ Fon saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "💾 Fon sozlamalarini saqlash"; }
+    }
+    async function clearBackground() {
+      askConfirmation("Fon rasmi barcha foydalanuvchilar uchun o‘chirilsinmi?",{icon:"🖼️",yesText:"O‘chirish",action:async() => { const next = {...DEFAULT_BACKGROUND,source:"",updatedAt:Date.now()}; await set(settingsRef("app_settings/background"),next); currentBackground = normalizeBackground(next); pendingBackgroundSource = ""; fillBackgroundForm(); notify("✅ Fon rasmi o‘chirildi.","success"); }});
+    }
+
+    async function approvePayment(uid) {
+      askConfirmation("To‘lov tasdiqlansin va test foydalanuvchiga saqlansinmi?",{icon:"✅",yesText:"Tasdiqlash",action:async() => {
+        const examSnap = await get(mainRef(`users/${uid}/exams/pending`)); if (!examSnap.exists()) throw new Error("Kutayotgan test topilmadi.");
+        const payload = examSnap.val() || {}; const profileSnap = await get(mainRef(`users/${uid}/profile`)); const profile = profileSnap.exists() ? profileSnap.val() || {} : {}; const pending = profile.pendingPayment || {}; const approvedAt = new Date().toISOString();
+        const finalPayload = {...payload,sourceFingerprint:String(payload.sourceFingerprint || ""),contentFingerprint:String(payload.contentFingerprint || "")};
+        const paidKey = String(finalPayload.name || "fayl").trim().toLowerCase().replace(/[.#$[\]/]/g,"_").slice(0,80) || `file_${Date.now()}`;
+        await update(mainRef(`users/${uid}`),{"exams/active":finalPayload,"exams/pending":null, [`profile/paidFiles/${paidKey}`]:{name:finalPayload.name || "",payload:finalPayload,sourceFingerprint:finalPayload.sourceFingerprint,contentFingerprint:finalPayload.contentFingerprint,purchasedAt:approvedAt}, "profile/pendingPayment":null,"profile/freeUsed":true,"profile/freeUploadCount":FREE_UPLOAD_LIMIT,"profile/paymentDecision":{status:"approved",at:approvedAt,read:false},"profile/adminNotification":{message:`To‘lovingiz tasdiqlandi! "${finalPayload.name || "fayl"}" test fayli saqlandi va ishlatishga tayyor.`,at:approvedAt,read:false}});
+        await set(push(settingsRef("payments")),{uid,amount:Number(pending.amount || 0),questionCount:Number(pending.questionCount || finalPayload.questions?.length || 0),bonusQuestionsUsed:Math.max(0,Math.floor(Number(pending.bonusQuestionsUsed) || 0)),fileName:finalPayload.name || "",sourceFingerprint:finalPayload.sourceFingerprint,contentFingerprint:finalPayload.contentFingerprint,approvedAt,status:"approved"});
+        notify("✅ To‘lov tasdiqlandi va fayl saqlandi.","success");
+      }});
+    }
+    async function rejectPayment(uid) {
+      askConfirmation("To‘lov rad etilsinmi? Foydalanuvchiga xabar yuboriladi.",{icon:"❌",yesText:"Rad etish",action:async() => {
+        const at = new Date().toISOString(); await remove(mainRef(`users/${uid}/exams/pending`)); await update(mainRef(`users/${uid}/profile`),{pendingPayment:null,paymentDecision:{status:"rejected",at,read:false},adminNotification:{message:"❌ Afsuski, to‘lovingiz tasdiqlanmadi. To‘g‘ri chek rasmini @ExamAssistant_Admin ga yuboring.",at,read:false}}); notify("✅ To‘lov rad etildi.","success");
+      }});
+    }
+    async function toggleBlock(uid,blocked) {
+      askConfirmation(blocked ? "Foydalanuvchi blokdan chiqarilsinmi?" : "Foydalanuvchi bloklansinmi? U ilovadan darhol chiqariladi.",{icon:blocked ? "🔓" : "🔒",yesText:blocked ? "Ochish" : "Bloklash",action:async() => { await update(mainRef(`users/${uid}/profile`),{isBlocked:!blocked,isOnline:false,currentActivity:blocked ? "Asosiy menyu" : "Bloklangan"}); notify(blocked ? "✅ Foydalanuvchi blokdan chiqarildi." : "✅ Foydalanuvchi bloklandi.","success"); }});
+    }
+    async function deleteUser(uid,name) {
+      askConfirmation(`"${name || uid}" foydalanuvchisi va barcha ma’lumotlari o‘chiriladi.`,{icon:"🗑️",yesText:"Ha, o‘chirish",action:async() => { await remove(mainRef(`users/${uid}`)); selectedUsers.delete(uid); notify("✅ Foydalanuvchi o‘chirildi.","success"); }});
+    }
+    async function deleteSelected() {
+       const ids = [...selectedUsers]; if (!ids.length) { notify("Avval foydalanuvchilarni tanlang.","warning"); return; }
+      askConfirmation(`${ids.length} ta foydalanuvchining barcha ma’lumotlari o‘chiriladi. Davom etilsinmi?`,{icon:"🗑️",yesText:"Ha, o‘chirish",action:async() => { await Promise.all(ids.map(uid => remove(mainRef(`users/${uid}`)))); selectedUsers.clear(); notify(`${ids.length} ta foydalanuvchi o‘chirildi.`,"success"); }});
+    }
+    async function grantFree(uid,name) {
+      askConfirmation(`"${name || uid}" foydalanuvchisiga bitta bepul fayl huquqi berilsinmi?`,{icon:"🎁",yesText:"Ha, berish",action:async() => { await update(mainRef(`users/${uid}/profile`),{freeUploadGranted:true,freeUploadGrantCount:1,adminNotification:{message:"Admin sizga bitta bepul fayl yuklash huquqini berdi.",at:new Date().toISOString(),read:false}}); notify("✅ Bepul fayl huquqi berildi.","success"); }});
+    }
+    async function sendMessage() {
+      const message = $("messageInput").value.trim(); if (!message || !messageTargetUid) { notify("Xabar matnini kiriting.","warning"); return; }
+      const button = $("sendMessageBtn"); button.disabled = true; button.textContent = "Yuborilmoqda...";
+      try { await update(mainRef(`users/${messageTargetUid}/profile`),{adminNotification:{message,at:new Date().toISOString(),read:false}}); closeModal("messageModal"); notify("✅ Xabar yuborildi.","success"); } catch (error) { notify(`❌ Xabar yuborilmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "✉ Xabarni yuborish"; }
+    }
+
+    function openUpload(uid,name) {
+      uploadTargetUid = uid; uploadTargetName = name || uid; uploadRows = []; uploadFileName = ""; $("uploadRecipient").textContent = `Qabul qiluvchi: ${uploadTargetName}`; $("adminFileInput").value = ""; $("uploadStatus").textContent = "Fayl tanlanmagan."; $("uploadStatus").className = "upload-status"; $("saveUploadBtn").disabled = true; openModal("uploadModal");
+    }
+    function cleanCellHTML(html) {
+      const template = document.createElement("template"); template.innerHTML = String(html || "");
+      template.content.querySelectorAll("script,style,iframe,object,embed").forEach(node => node.remove());
+      template.content.querySelectorAll("*").forEach(node => {
+        [...node.attributes].forEach(attr => { if (/^on/i.test(attr.name) || ["style","color","bgcolor","size","face","width","height","align","valign"].includes(attr.name.toLowerCase())) node.removeAttribute(attr.name); });
+        if (node.tagName === "IMG") { const src = node.getAttribute("src") || ""; if (!isSafeImage(src)) node.remove(); else { node.removeAttribute("width"); node.removeAttribute("height"); node.setAttribute("style","max-width:100%;height:auto"); } }
+      });
+      return template.innerHTML.trim();
+    }
+    async function processDocx(file) {
+      if (!window.mammoth) throw new Error("DOCX o‘quvchi yuklanmadi. Internetni tekshiring.");
+      const result = await window.mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer(),convertImage:image => image.read("base64").then(buffer => ({src:`data:${image.contentType};base64,${buffer}`}))});
+      const doc = new DOMParser().parseFromString(result.value,"text/html");
+      uploadRows = [...doc.querySelectorAll("tr")].map(row => [...row.querySelectorAll("td,th")].map(cell => cleanCellHTML(cell.innerHTML))).filter(row => row.length >= 2 && row.some(Boolean));
+      if (!uploadRows.length) throw new Error("Faylda savollar jadvali topilmadi.");
+      if (uploadRows.length > MAX_QUESTIONS) throw new Error(`Maksimal ${MAX_QUESTIONS} ta savolga ruxsat beriladi.`);
+    }
+    async function handleFile(file) {
+      if (!file) return; if (!/\.docx$/i.test(file.name)) { $("uploadStatus").textContent = "❌ Faqat DOCX fayl qabul qilinadi."; $("uploadStatus").className = "upload-status error"; return; }
+      uploadFileName = file.name.replace(/\.[^/.]+$/,""); $("uploadStatus").innerHTML = '<span class="spinner"></span> DOCX fayli o‘qilmoqda...'; $("saveUploadBtn").disabled = true;
+      try { await processDocx(file); $("uploadStatus").textContent = `✅ ${uploadRows.length.toLocaleString("ru-RU")} ta savol tayyor: “${uploadFileName}”`; $("uploadStatus").className = "upload-status success"; $("saveUploadBtn").disabled = false; } catch (error) { uploadRows = []; $("uploadStatus").textContent = `❌ ${error.message || error}`; $("uploadStatus").className = "upload-status error"; }
+    }
+    async function saveUpload() {
+      if (!uploadTargetUid || !uploadRows.length) return;
+      const answerIndex = Number.parseInt($("answerIndex").value,10); const payload = {name:uploadFileName,isLight:false,questions:uploadRows.map(row => ({q:row[0] || "",a:row[answerIndex] || "",options:row.slice(1)}))};
+      const button = $("saveUploadBtn"); button.disabled = true; button.textContent = "Saqlanmoqda...";
+      try { const at = new Date().toISOString(); await update(mainRef(`users/${uploadTargetUid}`),{"exams/active":payload,"exams/pending":null,"profile/pendingAdminAction":{type:"clearAndUpload",at},"profile/adminNotification":{message:`Admin tomonidan sizga yangi test fayli yuklandi: "${uploadFileName}" (${uploadRows.length} ta savol)`,at,read:false}}); closeModal("uploadModal"); notify("✅ Fayl foydalanuvchiga yuklandi.","success"); } catch (error) { notify(`❌ Fayl saqlanmadi: ${error.message || error}`,"error"); } finally { button.disabled = false; button.textContent = "Foydalanuvchiga saqlash"; }
+    }
+
+    function handleUserAction(event) {
+      const target = event.target.closest("[data-action]"); if (!target) return; const action = target.dataset.action; const uid = target.dataset.uid;
+      if (action === "approve") approvePayment(uid); if (action === "reject") rejectPayment(uid); if (action === "receipt") { $("receiptImage").src = safeImageSrc(target.dataset.src); openModal("receiptModal"); }
+      if (action === "block") toggleBlock(uid,target.dataset.blocked === "true"); if (action === "delete") deleteUser(uid,target.dataset.name); if (action === "free") grantFree(uid,target.dataset.name);
+      if (action === "upload") openUpload(uid,target.dataset.name); if (action === "message") { messageTargetUid=uid; $("messageRecipient").textContent=target.dataset.name || uid; $("messageInput").value=""; openModal("messageModal"); setTimeout(()=>$("messageInput").focus(),50); }
+    }
+    function startListeners() {
+      if (listenersStarted) return; listenersStarted = true;
+      onValue(mainRef("users"),snapshot => {
+        users = snapshot.exists() ? snapshot.val() || {} : {};
+        checkAndNotifyPayments(users);
+        renderAll();
+      },error => notify(`❌ Foydalanuvchilarni o‘qib bo‘lmadi: ${error.message || error}`,"error"));
+      onValue(settingsRef("payments"),snapshot => { payments = snapshot.exists() ? snapshot.val() || {} : {}; renderOverview(); },error => notify(`❌ To‘lovlar bazasini o‘qib bo‘lmadi: ${error.message || error}`,"error"));
+    }
+    async function refresh() {
+      try {
+        const [usersSnap,paymentsSnap] = await Promise.all([get(mainRef("users")),get(settingsRef("payments"))]);
+        users = usersSnap.exists() ? usersSnap.val() || {} : {};
+        payments = paymentsSnap.exists() ? paymentsSnap.val() || {} : {};
+        checkAndNotifyPayments(users);
+        renderAll();
+        notify("✅ Ma’lumotlar yangilandi.","success");
+      } catch (error) { notify(`❌ Yangilashda xatolik: ${error.message || error}`,"error"); }
+    }
+    function setupUI() {
+      document.querySelectorAll(".tab-btn").forEach(button => button.addEventListener("click",() => { document.querySelectorAll(".tab-btn").forEach(item=>item.classList.remove("active")); button.classList.add("active"); $(button.dataset.target).scrollIntoView({behavior:"smooth",block:"start"}); }));
+      $("refreshBtn").addEventListener("click",refresh); $("userSearch").addEventListener("input",renderUsers); $("deleteSelectedBtn").addEventListener("click",deleteSelected);
+      $("selectAll").addEventListener("change",event => { document.querySelectorAll("[data-user-check]:not(:disabled)").forEach(input => { input.checked=event.target.checked; if (event.target.checked) selectedUsers.add(input.dataset.userCheck); else selectedUsers.delete(input.dataset.userCheck); }); updateSelectionUI(); });
+      $("userList").addEventListener("change",event => { const input=event.target.closest("[data-user-check]"); if (!input) return; if (input.checked) selectedUsers.add(input.dataset.userCheck); else selectedUsers.delete(input.dataset.userCheck); updateSelectionUI(); });
+      $("userList").addEventListener("click",handleUserAction); $("paymentList").addEventListener("click",handleUserAction);
+      $("savePriceBtn").addEventListener("click",savePrice); $("saveCardBtn").addEventListener("click",saveCard); $("saveBackgroundBtn").addEventListener("click",saveBackground); $("clearBackgroundBtn").addEventListener("click",clearBackground);
+      $("bgOpacity").addEventListener("input",updateRangeLabels); $("bgBlur").addEventListener("input",updateRangeLabels); document.querySelectorAll(".preset").forEach(button => button.addEventListener("click",()=>{ $("bgOpacity").value=button.dataset.opacity; $("bgBlur").value=button.dataset.blur; updateRangeLabels(); }));
+      $("bgSource").addEventListener("input",event=>updateBackgroundPreview(event.target.value.trim())); $("bgFile").addEventListener("change",event=>{ const file=event.target.files?.[0]; if (!file || !file.type.startsWith("image/")) { notify("❌ Faqat rasm faylini tanlang.","error"); return; } const reader=new FileReader(); reader.onload=()=>{ pendingBackgroundSource=String(reader.result || ""); $("bgSource").value=`Yuklangan rasm: ${file.name}`; updateBackgroundPreview(pendingBackgroundSource); }; reader.readAsDataURL(file); });
+      $("sendMessageBtn").addEventListener("click",sendMessage); $("adminFileInput").addEventListener("change",event=>handleFile(event.target.files?.[0])); $("saveUploadBtn").addEventListener("click",saveUpload); $("confirmYes").addEventListener("click",runConfirmed); $("confirmNo").addEventListener("click",()=>{confirmAction=null;closeModal("confirmModal");});
+      document.querySelectorAll("[data-close-modal]").forEach(button => button.addEventListener("click",()=>closeModal(button.dataset.closeModal))); document.querySelectorAll(".overlay").forEach(overlay=>overlay.addEventListener("click",event=>{if(event.target===overlay) closeModal(overlay.id);}));
+    }
+
+    function boot() {
+      try { tg?.ready(); tg?.expand(); } catch (_) {}
+      const telegramId = String(tg?.initDataUnsafe?.user?.id || "");
+      if (telegramId !== ADMIN_ID) { $("accessMessage").textContent = telegramId ? "Bu Telegram hisobida admin huquqi mavjud emas." : "Admin panelini Telegram WebApp ichida oching."; return; }
+      $("accessDenied").classList.add("hidden"); $("appShell").classList.remove("hidden"); setupUI(); startListeners(); loadSettings(); refresh();
+    }
+    boot();
+  </script>
+</body>
+</html>
