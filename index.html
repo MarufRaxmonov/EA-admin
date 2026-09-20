@@ -46,7 +46,7 @@
     .access-card { max-width:540px; margin:15vh auto; padding:34px; border:1px solid var(--border); border-radius:26px; background:rgba(18,20,25,.9); box-shadow:var(--shadow); text-align:center; }
     .access-card .brand-mark { margin:0 auto 15px; }
     .access-card h2 { margin-bottom:8px; font-size:24px; }
-    .access-card p { color:var(--muted); }
+    .access-card p { color:var(--muted); word-break:break-word; }
     .admin-tabs { display:flex; gap:8px; overflow:auto; padding:5px; margin-bottom:22px; border:1px solid var(--border); border-radius:16px; background:rgba(18,20,25,.72); position:sticky; top:8px; z-index:20; backdrop-filter:blur(18px); }
     .tab-btn { flex:1; min-width:110px; border:0; border-radius:11px; padding:12px 15px; color:var(--muted); background:transparent; font-weight:800; white-space:nowrap; }
     .tab-btn.active { color:#111318; background:var(--gold); }
@@ -636,11 +636,29 @@
 
     function boot() {
       try { tg?.ready(); tg?.expand(); } catch (_) {}
+      
       const telegramId = String(tg?.initDataUnsafe?.user?.id || "");
-      if (telegramId !== ADMIN_ID) { $("accessMessage").textContent = telegramId ? "Bu Telegram hisobida admin huquqi mavjud emas." : "Admin panelini Telegram WebApp ichida oching."; return; }
-      $("accessDenied").classList.add("hidden"); $("appShell").classList.remove("hidden"); setupUI(); startListeners(); loadSettings(); refresh();
+      
+      if (telegramId !== ADMIN_ID) {
+        $("accessMessage").textContent = telegramId 
+          ? `Ruxsat berilmadi. Sizning ID: ${telegramId}` 
+          : "Admin panelini Telegram WebApp ichida oching.";
+        return;
+      }
+
+      $("accessDenied").classList.add("hidden");
+      $("appShell").classList.remove("hidden");
+      setupUI();
+      startListeners();
+      loadSettings();
+      refresh();
     }
-    boot();
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
   </script>
 </body>
 </html>
